@@ -4,6 +4,9 @@ from ast import literal_eval
 with open('OTIDs.csv', newline='') as otids:
     reader = csv.reader(otids)
     otids_list = list(reader)
+from datetime import datetime
+
+startTime = datetime.now()
 
 #TODO: Add rematches, combine matching entries
 
@@ -669,3 +672,5 @@ for i in range(3576, 3577):
                     break
                 #if ((literal_eval(hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[0:2] + hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[-4:] )) < 440):
                     #print("VALID MON")
+print("Time ran: ")
+print(datetime.now() - startTime)
