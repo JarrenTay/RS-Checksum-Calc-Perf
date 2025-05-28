@@ -559,6 +559,11 @@ pid = 1321080
 valid_combinations = []
 #print(otids_list[0])
 
+CSV_HEADER = "Player frame,Enemy Frame,Player TID/SID,Enemy TID/SID,Species,Held Item,Moves,Pokeball,Egg,Enemy Mon"
+# Delete existing files if they exist
+open("checksumMatches.csv", "w")
+open("aceMatches.csv", "w")
+
  ############################################
  # Put your own TID/SID frame here (can find with PokeFinder)
  # Ideally searching through 20k trainer ids
@@ -570,7 +575,8 @@ for i in range(3576, 3577):
     # Put the range of frames you want to search for here
     #################################################
     for j in range(1, 4000):
-
+        if j % 100 == 0:
+            print("Checking frame {}".format(j))
         enemy_key = pid ^ (literal_eval(f"{int(otids_list[j][1]):#0{6}x}" + f"{int(otids_list[j][2]):#0{6}x}"[2::]))
         for enemy_mon in enemy_data_list:
             data_order_string = (data_order[(enemy_dict[enemy_mon[0]][0]) % 24])
@@ -629,29 +635,7 @@ for i in range(3576, 3577):
                       #  file.write("ACE move found: " + str(i-1) + " " + str(j-1))
                     #if (f"{(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2)):#0{10}x}"[0:6] == '0x0113'):
                     #    print("Eon Ticket found: " + str(i-1) + " " + str(j-1))
-                    if hex(int(format((keys_xored ^ data1), '#034b')[2:], 2))[0:2] + hex(int(format((keys_xored ^ data1), '#034b')[2:], 2))[-4:] == '0x9b1e':
-                        
-                        ace_out = " ACE species found: Player frame: {} Enemy Frame: {} Player TID/SID: {} {} Enemy TID/SID: {} {} Species: {}{} Held Item: {} Moves: 0x{} {} 0x{} {} Pokeball: {} Egg: {} Enemy Mon: {}".format(
-                            str(i-1),
-                            str(j-1),
-                            otids_list[i][1],
-                            otids_list[i][2],
-                            otids_list[j][2],
-                            otids_list[j][1],
-                            hex(int(format((keys_xored ^ data1), '#034b')[2:], 2))[0:2],
-                            hex(int(format((keys_xored ^ data1), '#034b')[2:], 2))[-4:],
-                            f"{(int(format((keys_xored ^ data1), '#034b')[2:], 2)):#0{10}x}"[0:6], 
-                            f"{(int(format((keys_xored ^ data4), '#034b')[2:], 2)):#0{10}x}"[-4:],
-                            f"{(int(format((keys_xored ^ data4), '#034b')[2:], 2)):#0{10}x}"[0:6],
-                            f"{(int(format((keys_xored ^ data5), '#034b')[2:], 2)):#0{10}x}"[-4:],
-                            f"{(int(format((keys_xored ^ data5), '#034b')[2:], 2)):#0{10}x}"[0:6], 
-                            str(k),
-                            format(keys_xored ^ data11, '#034b')[3:4],
-                            enemy_mon[0])
-                        print(ace_out)
-
-
-                    match_out = "Match found: Player frame: {} Enemy Frame: {} Player TID/SID: {} {} Enemy TID/SID: {} {} Species: {}{} Held Item: {} Moves: 0x{} {} 0x{} {} Pokeball: {} Egg: {} Enemy Mon: {}".format(
+                    match_out = "{},{},{} {},{} {},{}{},{},0x{} {} 0x{} {},{},{},{}\n".format(
                         str(i-1),
                         str(j-1),
                         otids_list[i][1],
@@ -668,7 +652,13 @@ for i in range(3576, 3577):
                         str(k),
                         format(keys_xored ^ data11, '#034b')[3:4],
                         enemy_mon[0])
-                    print(match_out)
+                    
+                    with open("checksumMatches.csv", "a") as checksumFile:
+                        checksumFile.write(match_out)
+                    
+                    if hex(int(format((keys_xored ^ data1), '#034b')[2:], 2))[0:2] + hex(int(format((keys_xored ^ data1), '#034b')[2:], 2))[-4:] == '0x9b1e':
+                        with open("aceMatches.csv", "a") as aceFile:
+                            aceFile.write(match_out)
                     break
                 #if ((literal_eval(hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[0:2] + hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[-4:] )) < 440):
                     #print("VALID MON")
