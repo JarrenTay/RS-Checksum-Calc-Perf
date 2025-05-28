@@ -554,6 +554,7 @@ valid_combinations = []
 
  ############################################
  # Put your own TID/SID frame here (can find with PokeFinder)
+ # Ideally searching through 20k trainer ids
  ############################################
 for i in range(3576, 3577):
     player_key = pid ^ (literal_eval(f"{int(otids_list[i][2]):#0{6}x}" + f"{int(otids_list[i][1]):#0{6}x}"[2::]))
@@ -907,24 +908,57 @@ for i in range(3576, 3577):
                     if hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[0:2] + hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[-4:] == '0x9b1e':
 
 
-                        print(" ACE species found: " + "Player frame: " + str(i-1) + " Enemy Frame: " + str(j-1) + " Player TID/SID: " + otids_list[i][1] + " " + otids_list[i][2] + 
-                            " Enemy TID/SID: " + otids_list[j][2] + " " + otids_list[j][1] 
-                            + " Species: " + hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[0:2] 
-                        + hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[-4:] 
-                        + " Held Item: " + f"{(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2)):#0{10}x}"[0:6] 
-                        + " Moves: " + "0x" + f"{(int(format((player_key ^ enemy_key ^ data4), '#034b')[2:], 2)):#0{10}x}"[-4:] + " " + f"{(int(format((player_key ^ enemy_key ^ data4), '#034b')[2:], 2)):#0{10}x}"[0:6]
-                            + " 0x" + f"{(int(format((player_key ^ enemy_key ^ data5), '#034b')[2:], 2)):#0{10}x}"[-4:] + " " + f"{(int(format((player_key ^ enemy_key ^ data5), '#034b')[2:], 2)):#0{10}x}"[0:6] + " Pokeball: " + str(k)
-                            + (" Egg: " + format(player_key ^ enemy_key ^ data11, '#034b')[3:4]) + " Enemy Mon: " + enemy_mon[0])
+                        #print(" ACE species found: " 
+                        #    + "Player frame: " + str(i-1)
+                        #    + " Enemy Frame: " + str(j-1) 
+                        #    + " Player TID/SID: " + otids_list[i][1] + " " + otids_list[i][2] 
+                        #    + " Enemy TID/SID: " + otids_list[j][2] + " " + otids_list[j][1] 
+                        #    + " Species: " + hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[0:2] + hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[-4:] 
+                        #    + " Held Item: " + f"{(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2)):#0{10}x}"[0:6] 
+                        #    + " Moves: " + "0x" + f"{(int(format((player_key ^ enemy_key ^ data4), '#034b')[2:], 2)):#0{10}x}"[-4:] + " " + f"{(int(format((player_key ^ enemy_key ^ data4), '#034b')[2:], 2)):#0{10}x}"[0:6]
+                        #    + " 0x" + f"{(int(format((player_key ^ enemy_key ^ data5), '#034b')[2:], 2)):#0{10}x}"[-4:] + " " + f"{(int(format((player_key ^ enemy_key ^ data5), '#034b')[2:], 2)):#0{10}x}"[0:6] 
+                        #    + " Pokeball: " + str(k)
+                        #    + " Egg: " + format(player_key ^ enemy_key ^ data11, '#034b')[3:4] 
+                        #    + " Enemy Mon: " + enemy_mon[0])
+                        
+                        ace_out = " ACE species found: Player frame: {} Enemy Frame: {} Player TID/SID: {} {} Enemy TID/SID: {} {} Species: {}{} Held Item: {} Moves: 0x{} {} 0x{} {} Pokeball: {} Egg: {} Enemy Mon: {}".format(
+                            str(i-1),
+                            str(j-1),
+                            otids_list[i][1],
+                            otids_list[i][2],
+                            otids_list[j][2],
+                            otids_list[j][1],
+                            hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[0:2],
+                            hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[-4:],
+                            f"{(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2)):#0{10}x}"[0:6], 
+                            f"{(int(format((player_key ^ enemy_key ^ data4), '#034b')[2:], 2)):#0{10}x}"[-4:],
+                            f"{(int(format((player_key ^ enemy_key ^ data4), '#034b')[2:], 2)):#0{10}x}"[0:6],
+                            f"{(int(format((player_key ^ enemy_key ^ data5), '#034b')[2:], 2)):#0{10}x}"[-4:],
+                            f"{(int(format((player_key ^ enemy_key ^ data5), '#034b')[2:], 2)):#0{10}x}"[0:6], 
+                            str(k),
+                            format(player_key ^ enemy_key ^ data11, '#034b')[3:4],
+                            enemy_mon[0])
+                        print(ace_out)
 
 
-                    print("Match Found! Player frame: " + str(i-1) + " Enemy Frame: " + str(j-1) + " Player TID/SID: " + otids_list[i][1] + " " + otids_list[i][2] + 
-                        " Enemy TID/SID: " + otids_list[j][2] + " " + otids_list[j][1] 
-                        + " Species: " + hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[0:2] 
-                    + hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[-4:] 
-                    + " Held Item: " + f"{(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2)):#0{10}x}"[0:6] 
-                    + " Moves: " + "0x" + f"{(int(format((player_key ^ enemy_key ^ data4), '#034b')[2:], 2)):#0{10}x}"[-4:] + " " + f"{(int(format((player_key ^ enemy_key ^ data4), '#034b')[2:], 2)):#0{10}x}"[0:6]
-                        + " 0x" + f"{(int(format((player_key ^ enemy_key ^ data5), '#034b')[2:], 2)):#0{10}x}"[-4:] + " " + f"{(int(format((player_key ^ enemy_key ^ data5), '#034b')[2:], 2)):#0{10}x}"[0:6] + " Pokeball: " + str(k)
-                        + (" Egg: " + format(player_key ^ enemy_key ^ data11, '#034b')[3:4]) + " Enemy Mon: " + enemy_mon[0]) 
+                    match_out = "Match found: Player frame: {} Enemy Frame: {} Player TID/SID: {} {} Enemy TID/SID: {} {} Species: {}{} Held Item: {} Moves: 0x{} {} 0x{} {} Pokeball: {} Egg: {} Enemy Mon: {}".format(
+                        str(i-1),
+                        str(j-1),
+                        otids_list[i][1],
+                        otids_list[i][2],
+                        otids_list[j][2],
+                        otids_list[j][1],
+                        hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[0:2],
+                        hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[-4:],
+                        f"{(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2)):#0{10}x}"[0:6], 
+                        f"{(int(format((player_key ^ enemy_key ^ data4), '#034b')[2:], 2)):#0{10}x}"[-4:],
+                        f"{(int(format((player_key ^ enemy_key ^ data4), '#034b')[2:], 2)):#0{10}x}"[0:6],
+                        f"{(int(format((player_key ^ enemy_key ^ data5), '#034b')[2:], 2)):#0{10}x}"[-4:],
+                        f"{(int(format((player_key ^ enemy_key ^ data5), '#034b')[2:], 2)):#0{10}x}"[0:6], 
+                        str(k),
+                        format(player_key ^ enemy_key ^ data11, '#034b')[3:4],
+                        enemy_mon[0])
+                    print(match_out)
                     break
                 #if ((literal_eval(hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[0:2] + hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[-4:] )) < 440):
                     #print("VALID MON")
