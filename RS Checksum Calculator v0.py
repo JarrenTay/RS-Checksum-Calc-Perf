@@ -559,10 +559,12 @@ pid = 1321080
 valid_combinations = []
 #print(otids_list[0])
 
-CSV_HEADER = "Player frame,Enemy Frame,Player TID/SID,Enemy TID/SID,Species,Held Item,Moves,Pokeball,Egg,Enemy Mon"
+CSV_HEADER = "Player frame,Enemy Frame,Player TID/SID,Enemy TID/SID,Species,Held Item,Moves,Pokeball,Egg,Enemy Mon\n"
 # Delete existing files if they exist
-open("checksumMatches.csv", "w")
-open("aceMatches.csv", "w")
+with open("checksumMatches.csv", "w") as checksumFile:
+    checksumFile.write(CSV_HEADER)
+with open("aceMatches.csv", "w") as aceFile:
+    aceFile.write(CSV_HEADER)
 
  ############################################
  # Put your own TID/SID frame here (can find with PokeFinder)
@@ -664,3 +666,4 @@ for i in range(3576, 3577):
                     #print("VALID MON")
 print("Time ran: ")
 print(datetime.now() - startTime)
+print("Compared to baseline of 2:40 for 1 TID and 4000 frames")
