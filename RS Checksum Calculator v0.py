@@ -581,7 +581,8 @@ for i in range(3576, 3577):
             print("Checking frame {}".format(j))
         enemy_key = pid ^ (literal_eval(f"{int(otids_list[j][1]):#0{6}x}" + f"{int(otids_list[j][2]):#0{6}x}"[2::]))
         for enemy_mon in enemy_data_list:
-            data_order_string = (data_order[(enemy_dict[enemy_mon[0]][0]) % 24])
+            enemy_mon_zero = enemy_dict[enemy_mon[0]]
+            data_order_string = (data_order[(enemy_mon_zero[0]) % 24])
             for data_order_char_index in range(len(data_order_string)):
                 enemy_mon_index = 0
                 match data_order_string[data_order_char_index]:
@@ -596,21 +597,21 @@ for i in range(3576, 3577):
 
                 match data_order_char_index:
                     case 0:
-                        data1 = enemy_dict[enemy_mon[0]][enemy_mon_index]
-                        data2 = enemy_dict[enemy_mon[0]][enemy_mon_index + 1]
-                        data3 = enemy_dict[enemy_mon[0]][enemy_mon_index + 2]
+                        data1 = enemy_mon_zero[enemy_mon_index]
+                        data2 = enemy_mon_zero[enemy_mon_index + 1]
+                        data3 = enemy_mon_zero[enemy_mon_index + 2]
                     case 1:
-                        data4 = enemy_dict[enemy_mon[0]][enemy_mon_index]
-                        data5 = enemy_dict[enemy_mon[0]][enemy_mon_index + 1]
-                        data6 = enemy_dict[enemy_mon[0]][enemy_mon_index + 2]
+                        data4 = enemy_mon_zero[enemy_mon_index]
+                        data5 = enemy_mon_zero[enemy_mon_index + 1]
+                        data6 = enemy_mon_zero[enemy_mon_index + 2]
                     case 2:
-                        data7 = enemy_dict[enemy_mon[0]][enemy_mon_index]
-                        data8 = enemy_dict[enemy_mon[0]][enemy_mon_index + 1]
-                        data9 = enemy_dict[enemy_mon[0]][enemy_mon_index + 2]
+                        data7 = enemy_mon_zero[enemy_mon_index]
+                        data8 = enemy_mon_zero[enemy_mon_index + 1]
+                        data9 = enemy_mon_zero[enemy_mon_index + 2]
                     case 3:
-                        data10 = enemy_dict[enemy_mon[0]][enemy_mon_index]
-                        data11 = enemy_dict[enemy_mon[0]][enemy_mon_index + 1]
-                        data12 = enemy_dict[enemy_mon[0]][enemy_mon_index + 2]
+                        data10 = enemy_mon_zero[enemy_mon_index]
+                        data11 = enemy_mon_zero[enemy_mon_index + 1]
+                        data12 = enemy_mon_zero[enemy_mon_index + 2]
             
             for k in range(1, 13):
                 #checking each pokeball
