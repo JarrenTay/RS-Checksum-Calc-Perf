@@ -533,6 +533,10 @@ data_order = {0: 'GAEM',	6: 'AGEM', 	12: 'EGAM', 18: 'MGAE',
 3: 'GEMA', 	9: 'AEMG',	15: 'EAMG', 	21: 'MAEG',
 4: 'GMAE', 	10: 'AMGE', 16: 'EMGA', 	22: 'MEGA',
 5: 'GMEA', 	11: 'AMEG',	17: 'EMAG', 	23: 'MEAG' }
+DATA_ORDER_G = 1
+DATA_ORDER_A = 4
+DATA_ORDER_E = 7
+DATA_ORDER_M = 10
 
 # Wurmple Decrypted Data
 data1 = 0
@@ -566,320 +570,37 @@ for i in range(3576, 3577):
 
         enemy_key = pid ^ (literal_eval(f"{int(otids_list[j][1]):#0{6}x}" + f"{int(otids_list[j][2]):#0{6}x}"[2::]))
         for enemy_mon in enemy_data_list:
-            if (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'GAEM':
-                #normalize around 0. GAEM
-                #TODO: Replace this with looping through the string or something
-                data1 = enemy_dict[enemy_mon[0]][1]
-                data2 = enemy_dict[enemy_mon[0]][2]
-                data3 = enemy_dict[enemy_mon[0]][3]
-                data4 = enemy_dict[enemy_mon[0]][4]
-                data5 = enemy_dict[enemy_mon[0]][5]
-                data6 = enemy_dict[enemy_mon[0]][6]
-                data7 = enemy_dict[enemy_mon[0]][7]
-                data8 = enemy_dict[enemy_mon[0]][8]
-                data9 = enemy_dict[enemy_mon[0]][9]
-                data10 = enemy_dict[enemy_mon[0]][10]
-                data11 = enemy_dict[enemy_mon[0]][11]
-                data12 = enemy_dict[enemy_mon[0]][12]
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'GAME':
-                data1 = enemy_dict[enemy_mon[0]][1]
-                data2 = enemy_dict[enemy_mon[0]][2]
-                data3 = enemy_dict[enemy_mon[0]][3]
-                data4 = enemy_dict[enemy_mon[0]][4]
-                data5 = enemy_dict[enemy_mon[0]][5]
-                data6 = enemy_dict[enemy_mon[0]][6]
-                data7 = enemy_dict[enemy_mon[0]][10]
-                data8 = enemy_dict[enemy_mon[0]][11]
-                data9 = enemy_dict[enemy_mon[0]][12]
-                data10 = enemy_dict[enemy_mon[0]][7]
-                data11 = enemy_dict[enemy_mon[0]][8]
-                data12 = enemy_dict[enemy_mon[0]][9]   
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'GEAM':
-                data1 = enemy_dict[enemy_mon[0]][1]
-                data2 = enemy_dict[enemy_mon[0]][2]
-                data3 = enemy_dict[enemy_mon[0]][3]
-                data4 = enemy_dict[enemy_mon[0]][7]
-                data5 = enemy_dict[enemy_mon[0]][8]
-                data6 = enemy_dict[enemy_mon[0]][9]
-                data7 = enemy_dict[enemy_mon[0]][4]
-                data8 = enemy_dict[enemy_mon[0]][5]
-                data9 = enemy_dict[enemy_mon[0]][6]
-                data10 = enemy_dict[enemy_mon[0]][10]
-                data11 = enemy_dict[enemy_mon[0]][11]
-                data12 = enemy_dict[enemy_mon[0]][12]     
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'GEMA':
-                data1 = enemy_dict[enemy_mon[0]][1]
-                data2 = enemy_dict[enemy_mon[0]][2]
-                data3 = enemy_dict[enemy_mon[0]][3]
-                data4 = enemy_dict[enemy_mon[0]][10]
-                data5 = enemy_dict[enemy_mon[0]][11]
-                data6 = enemy_dict[enemy_mon[0]][12]
-                data7 = enemy_dict[enemy_mon[0]][4]
-                data8 = enemy_dict[enemy_mon[0]][5]
-                data9 = enemy_dict[enemy_mon[0]][6]
-                data10 = enemy_dict[enemy_mon[0]][7]
-                data11 = enemy_dict[enemy_mon[0]][8]
-                data12 = enemy_dict[enemy_mon[0]][9]    
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'GMAE':
-                data1 = enemy_dict[enemy_mon[0]][1]
-                data2 = enemy_dict[enemy_mon[0]][2]
-                data3 = enemy_dict[enemy_mon[0]][3]
-                data4 = enemy_dict[enemy_mon[0]][7]
-                data5 = enemy_dict[enemy_mon[0]][8]
-                data6 = enemy_dict[enemy_mon[0]][9]
-                data7 = enemy_dict[enemy_mon[0]][10]
-                data8 = enemy_dict[enemy_mon[0]][11]
-                data9 = enemy_dict[enemy_mon[0]][12]
-                data10 = enemy_dict[enemy_mon[0]][4]
-                data11 = enemy_dict[enemy_mon[0]][5]
-                data12 = enemy_dict[enemy_mon[0]][6]    
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'GMEA':
-                data1 = enemy_dict[enemy_mon[0]][1]
-                data2 = enemy_dict[enemy_mon[0]][2]
-                data3 = enemy_dict[enemy_mon[0]][3]
-                data4 = enemy_dict[enemy_mon[0]][10]
-                data5 = enemy_dict[enemy_mon[0]][11]
-                data6 = enemy_dict[enemy_mon[0]][12]
-                data7 = enemy_dict[enemy_mon[0]][7]
-                data8 = enemy_dict[enemy_mon[0]][8]
-                data9 = enemy_dict[enemy_mon[0]][9]
-                data10 = enemy_dict[enemy_mon[0]][4]
-                data11 = enemy_dict[enemy_mon[0]][5]
-                data12 = enemy_dict[enemy_mon[0]][6]    
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'AGEM':
-                data1 = enemy_dict[enemy_mon[0]][4]
-                data2 = enemy_dict[enemy_mon[0]][5]
-                data3 = enemy_dict[enemy_mon[0]][6]
-                data4 = enemy_dict[enemy_mon[0]][1]
-                data5 = enemy_dict[enemy_mon[0]][2]
-                data6 = enemy_dict[enemy_mon[0]][3]
-                data7 = enemy_dict[enemy_mon[0]][7]
-                data8 = enemy_dict[enemy_mon[0]][8]
-                data9 = enemy_dict[enemy_mon[0]][9]
-                data10 = enemy_dict[enemy_mon[0]][10]
-                data11 = enemy_dict[enemy_mon[0]][11]
-                data12 = enemy_dict[enemy_mon[0]][12]  
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'AGME':
-                data1 = enemy_dict[enemy_mon[0]][4]
-                data2 = enemy_dict[enemy_mon[0]][5]
-                data3 = enemy_dict[enemy_mon[0]][6]
-                data4 = enemy_dict[enemy_mon[0]][1]
-                data5 = enemy_dict[enemy_mon[0]][2]
-                data6 = enemy_dict[enemy_mon[0]][3]
-                data7 = enemy_dict[enemy_mon[0]][10]
-                data8 = enemy_dict[enemy_mon[0]][11]
-                data9 = enemy_dict[enemy_mon[0]][12]
-                data10 = enemy_dict[enemy_mon[0]][7]
-                data11 = enemy_dict[enemy_mon[0]][8]
-                data12 = enemy_dict[enemy_mon[0]][9]  
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'AEGM':
-                data1 = enemy_dict[enemy_mon[0]][7]
-                data2 = enemy_dict[enemy_mon[0]][8]
-                data3 = enemy_dict[enemy_mon[0]][9]
-                data4 = enemy_dict[enemy_mon[0]][1]
-                data5 = enemy_dict[enemy_mon[0]][2]
-                data6 = enemy_dict[enemy_mon[0]][3]
-                data7 = enemy_dict[enemy_mon[0]][4]
-                data8 = enemy_dict[enemy_mon[0]][5]
-                data9 = enemy_dict[enemy_mon[0]][6]
-                data10 = enemy_dict[enemy_mon[0]][10]
-                data11 = enemy_dict[enemy_mon[0]][11]
-                data12 = enemy_dict[enemy_mon[0]][12]  
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'AEMG':
-                data1 = enemy_dict[enemy_mon[0]][10]
-                data2 = enemy_dict[enemy_mon[0]][11]
-                data3 = enemy_dict[enemy_mon[0]][12]
-                data4 = enemy_dict[enemy_mon[0]][1]
-                data5 = enemy_dict[enemy_mon[0]][2]
-                data6 = enemy_dict[enemy_mon[0]][3]
-                data7 = enemy_dict[enemy_mon[0]][4]
-                data8 = enemy_dict[enemy_mon[0]][5]
-                data9 = enemy_dict[enemy_mon[0]][6]
-                data10 = enemy_dict[enemy_mon[0]][7]
-                data11 = enemy_dict[enemy_mon[0]][8]
-                data12 = enemy_dict[enemy_mon[0]][9]  
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'AMGE':
-                data1 = enemy_dict[enemy_mon[0]][7]
-                data2 = enemy_dict[enemy_mon[0]][8]
-                data3 = enemy_dict[enemy_mon[0]][9]
-                data4 = enemy_dict[enemy_mon[0]][1]
-                data5 = enemy_dict[enemy_mon[0]][2]
-                data6 = enemy_dict[enemy_mon[0]][3]
-                data7 = enemy_dict[enemy_mon[0]][10]
-                data8 = enemy_dict[enemy_mon[0]][11]
-                data9 = enemy_dict[enemy_mon[0]][12]
-                data10 = enemy_dict[enemy_mon[0]][4]
-                data11 = enemy_dict[enemy_mon[0]][5]
-                data12 = enemy_dict[enemy_mon[0]][6]
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'AMEG':
-                data1 = enemy_dict[enemy_mon[0]][10]
-                data2 = enemy_dict[enemy_mon[0]][11]
-                data3 = enemy_dict[enemy_mon[0]][12]
-                data4 = enemy_dict[enemy_mon[0]][1]
-                data5 = enemy_dict[enemy_mon[0]][2]
-                data6 = enemy_dict[enemy_mon[0]][3]
-                data7 = enemy_dict[enemy_mon[0]][7]
-                data8 = enemy_dict[enemy_mon[0]][8]
-                data9 = enemy_dict[enemy_mon[0]][9]
-                data10 = enemy_dict[enemy_mon[0]][4]
-                data11 = enemy_dict[enemy_mon[0]][5]
-                data12 = enemy_dict[enemy_mon[0]][6]   
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'EGAM':
-                data1 = enemy_dict[enemy_mon[0]][4]
-                data2 = enemy_dict[enemy_mon[0]][5]
-                data3 = enemy_dict[enemy_mon[0]][6]
-                data4 = enemy_dict[enemy_mon[0]][7]
-                data5 = enemy_dict[enemy_mon[0]][8]
-                data6 = enemy_dict[enemy_mon[0]][9]
-                data7 = enemy_dict[enemy_mon[0]][1]
-                data8 = enemy_dict[enemy_mon[0]][2]
-                data9 = enemy_dict[enemy_mon[0]][3]
-                data10 = enemy_dict[enemy_mon[0]][10]
-                data11 = enemy_dict[enemy_mon[0]][11]
-                data12 = enemy_dict[enemy_mon[0]][12]   
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'EGMA':
-                data1 = enemy_dict[enemy_mon[0]][4]
-                data2 = enemy_dict[enemy_mon[0]][5]
-                data3 = enemy_dict[enemy_mon[0]][6]
-                data4 = enemy_dict[enemy_mon[0]][10]
-                data5 = enemy_dict[enemy_mon[0]][11]
-                data6 = enemy_dict[enemy_mon[0]][12]
-                data7 = enemy_dict[enemy_mon[0]][1]
-                data8 = enemy_dict[enemy_mon[0]][2]
-                data9 = enemy_dict[enemy_mon[0]][3]
-                data10 = enemy_dict[enemy_mon[0]][7]
-                data11 = enemy_dict[enemy_mon[0]][8]
-                data12 = enemy_dict[enemy_mon[0]][9]  
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'EAGM':
-                data1 = enemy_dict[enemy_mon[0]][7]
-                data2 = enemy_dict[enemy_mon[0]][8]
-                data3 = enemy_dict[enemy_mon[0]][9]
-                data4 = enemy_dict[enemy_mon[0]][4]
-                data5 = enemy_dict[enemy_mon[0]][5]
-                data6 = enemy_dict[enemy_mon[0]][6]
-                data7 = enemy_dict[enemy_mon[0]][1]
-                data8 = enemy_dict[enemy_mon[0]][2]
-                data9 = enemy_dict[enemy_mon[0]][3]
-                data10 = enemy_dict[enemy_mon[0]][10]
-                data11 = enemy_dict[enemy_mon[0]][11]
-                data12 = enemy_dict[enemy_mon[0]][12]       
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'EAMG':
-                data1 = enemy_dict[enemy_mon[0]][10]
-                data2 = enemy_dict[enemy_mon[0]][11]
-                data3 = enemy_dict[enemy_mon[0]][12]
-                data4 = enemy_dict[enemy_mon[0]][4]
-                data5 = enemy_dict[enemy_mon[0]][5]
-                data6 = enemy_dict[enemy_mon[0]][6]
-                data7 = enemy_dict[enemy_mon[0]][1]
-                data8 = enemy_dict[enemy_mon[0]][2]
-                data9 = enemy_dict[enemy_mon[0]][3]
-                data10 = enemy_dict[enemy_mon[0]][7]
-                data11 = enemy_dict[enemy_mon[0]][8]
-                data12 = enemy_dict[enemy_mon[0]][9]   
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'EMGA':
-                data1 = enemy_dict[enemy_mon[0]][7]
-                data2 = enemy_dict[enemy_mon[0]][8]
-                data3 = enemy_dict[enemy_mon[0]][9]
-                data4 = enemy_dict[enemy_mon[0]][10]
-                data5 = enemy_dict[enemy_mon[0]][11]
-                data6 = enemy_dict[enemy_mon[0]][12]
-                data7 = enemy_dict[enemy_mon[0]][1]
-                data8 = enemy_dict[enemy_mon[0]][2]
-                data9 = enemy_dict[enemy_mon[0]][3]
-                data10 = enemy_dict[enemy_mon[0]][4]
-                data11 = enemy_dict[enemy_mon[0]][5]
-                data12 = enemy_dict[enemy_mon[0]][6]   
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'EMAG':
-                data1 = enemy_dict[enemy_mon[0]][10]
-                data2 = enemy_dict[enemy_mon[0]][11]
-                data3 = enemy_dict[enemy_mon[0]][12]
-                data4 = enemy_dict[enemy_mon[0]][7]
-                data5 = enemy_dict[enemy_mon[0]][8]
-                data6 = enemy_dict[enemy_mon[0]][9]
-                data7 = enemy_dict[enemy_mon[0]][1]
-                data8 = enemy_dict[enemy_mon[0]][2]
-                data9 = enemy_dict[enemy_mon[0]][3]
-                data10 = enemy_dict[enemy_mon[0]][4]
-                data11 = enemy_dict[enemy_mon[0]][5]
-                data12 = enemy_dict[enemy_mon[0]][6]  
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'MGAE':
-                data1 = enemy_dict[enemy_mon[0]][4]
-                data2 = enemy_dict[enemy_mon[0]][5]
-                data3 = enemy_dict[enemy_mon[0]][6]
-                data4 = enemy_dict[enemy_mon[0]][7]
-                data5 = enemy_dict[enemy_mon[0]][8]
-                data6 = enemy_dict[enemy_mon[0]][9]
-                data7 = enemy_dict[enemy_mon[0]][10]
-                data8 = enemy_dict[enemy_mon[0]][11]
-                data9 = enemy_dict[enemy_mon[0]][12]
-                data10 = enemy_dict[enemy_mon[0]][1]
-                data11 = enemy_dict[enemy_mon[0]][2]
-                data12 = enemy_dict[enemy_mon[0]][3]  
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'MGEA':
-                data1 = enemy_dict[enemy_mon[0]][4]
-                data2 = enemy_dict[enemy_mon[0]][5]
-                data3 = enemy_dict[enemy_mon[0]][6]
-                data4 = enemy_dict[enemy_mon[0]][10]
-                data5 = enemy_dict[enemy_mon[0]][11]
-                data6 = enemy_dict[enemy_mon[0]][12]
-                data7 = enemy_dict[enemy_mon[0]][7]
-                data8 = enemy_dict[enemy_mon[0]][8]
-                data9 = enemy_dict[enemy_mon[0]][9]
-                data10 = enemy_dict[enemy_mon[0]][1]
-                data11 = enemy_dict[enemy_mon[0]][2]
-                data12 = enemy_dict[enemy_mon[0]][3] 
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'MAGE':
-                data1 = enemy_dict[enemy_mon[0]][7]
-                data2 = enemy_dict[enemy_mon[0]][8]
-                data3 = enemy_dict[enemy_mon[0]][9]
-                data4 = enemy_dict[enemy_mon[0]][4]
-                data5 = enemy_dict[enemy_mon[0]][5]
-                data6 = enemy_dict[enemy_mon[0]][6]
-                data7 = enemy_dict[enemy_mon[0]][10]
-                data8 = enemy_dict[enemy_mon[0]][11]
-                data9 = enemy_dict[enemy_mon[0]][12]
-                data10 = enemy_dict[enemy_mon[0]][1]
-                data11 = enemy_dict[enemy_mon[0]][2]
-                data12 = enemy_dict[enemy_mon[0]][3]    
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'MAEG':
-                data1 = enemy_dict[enemy_mon[0]][10]
-                data2 = enemy_dict[enemy_mon[0]][11]
-                data3 = enemy_dict[enemy_mon[0]][12]
-                data4 = enemy_dict[enemy_mon[0]][4]
-                data5 = enemy_dict[enemy_mon[0]][5]
-                data6 = enemy_dict[enemy_mon[0]][6]
-                data7 = enemy_dict[enemy_mon[0]][7]
-                data8 = enemy_dict[enemy_mon[0]][8]
-                data9 = enemy_dict[enemy_mon[0]][9]
-                data10 = enemy_dict[enemy_mon[0]][1]
-                data11 = enemy_dict[enemy_mon[0]][2]
-                data12 = enemy_dict[enemy_mon[0]][3] 
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'MEGA':
-                data1 = enemy_dict[enemy_mon[0]][7]
-                data2 = enemy_dict[enemy_mon[0]][8]
-                data3 = enemy_dict[enemy_mon[0]][9]
-                data4 = enemy_dict[enemy_mon[0]][10]
-                data5 = enemy_dict[enemy_mon[0]][11]
-                data6 = enemy_dict[enemy_mon[0]][12]
-                data7 = enemy_dict[enemy_mon[0]][4]
-                data8 = enemy_dict[enemy_mon[0]][5]
-                data9 = enemy_dict[enemy_mon[0]][6]
-                data10 = enemy_dict[enemy_mon[0]][1]
-                data11 = enemy_dict[enemy_mon[0]][2]
-                data12 = enemy_dict[enemy_mon[0]][3]    
-            elif (data_order[(enemy_dict[enemy_mon[0]][0]) % 24]) == 'MEAG':
-                data1 = enemy_dict[enemy_mon[0]][10]
-                data2 = enemy_dict[enemy_mon[0]][11]
-                data3 = enemy_dict[enemy_mon[0]][12]
-                data4 = enemy_dict[enemy_mon[0]][7]
-                data5 = enemy_dict[enemy_mon[0]][8]
-                data6 = enemy_dict[enemy_mon[0]][9]
-                data7 = enemy_dict[enemy_mon[0]][4]
-                data8 = enemy_dict[enemy_mon[0]][5]
-                data9 = enemy_dict[enemy_mon[0]][6]
-                data10 = enemy_dict[enemy_mon[0]][1]
-                data11 = enemy_dict[enemy_mon[0]][2]
-                data12 = enemy_dict[enemy_mon[0]][3]                                                                                       
+            data_order_string = (data_order[(enemy_dict[enemy_mon[0]][0]) % 24])
+            for data_order_char_index in range(len(data_order_string)):
+                enemy_mon_index = 0
+                match data_order_string[data_order_char_index]:
+                    case 'G': 
+                        enemy_mon_index = DATA_ORDER_G
+                    case 'A':
+                        enemy_mon_index = DATA_ORDER_A
+                    case 'E': 
+                        enemy_mon_index = DATA_ORDER_E
+                    case 'M':
+                        enemy_mon_index = DATA_ORDER_M
+
+                match data_order_char_index:
+                    case 0:
+                        data1 = enemy_dict[enemy_mon[0]][enemy_mon_index]
+                        data2 = enemy_dict[enemy_mon[0]][enemy_mon_index + 1]
+                        data3 = enemy_dict[enemy_mon[0]][enemy_mon_index + 2]
+                    case 1:
+                        data4 = enemy_dict[enemy_mon[0]][enemy_mon_index]
+                        data5 = enemy_dict[enemy_mon[0]][enemy_mon_index + 1]
+                        data6 = enemy_dict[enemy_mon[0]][enemy_mon_index + 2]
+                    case 2:
+                        data7 = enemy_dict[enemy_mon[0]][enemy_mon_index]
+                        data8 = enemy_dict[enemy_mon[0]][enemy_mon_index + 1]
+                        data9 = enemy_dict[enemy_mon[0]][enemy_mon_index + 2]
+                    case 3:
+                        data10 = enemy_dict[enemy_mon[0]][enemy_mon_index]
+                        data11 = enemy_dict[enemy_mon[0]][enemy_mon_index + 1]
+                        data12 = enemy_dict[enemy_mon[0]][enemy_mon_index + 2]
+            
             for k in range(1, 13):
                 #checking each pokeball
                 data10 = int(format(data10, '#034b')[2:3] + format(k, '#06b')[2:] + format(data10, '#034b')[7:], 2)
@@ -906,20 +627,6 @@ for i in range(3576, 3577):
                     #if (f"{(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2)):#0{10}x}"[0:6] == '0x0113'):
                     #    print("Eon Ticket found: " + str(i-1) + " " + str(j-1))
                     if hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[0:2] + hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[-4:] == '0x9b1e':
-
-
-                        #print(" ACE species found: " 
-                        #    + "Player frame: " + str(i-1)
-                        #    + " Enemy Frame: " + str(j-1) 
-                        #    + " Player TID/SID: " + otids_list[i][1] + " " + otids_list[i][2] 
-                        #    + " Enemy TID/SID: " + otids_list[j][2] + " " + otids_list[j][1] 
-                        #    + " Species: " + hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[0:2] + hex(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2))[-4:] 
-                        #    + " Held Item: " + f"{(int(format((player_key ^ enemy_key ^ data1), '#034b')[2:], 2)):#0{10}x}"[0:6] 
-                        #    + " Moves: " + "0x" + f"{(int(format((player_key ^ enemy_key ^ data4), '#034b')[2:], 2)):#0{10}x}"[-4:] + " " + f"{(int(format((player_key ^ enemy_key ^ data4), '#034b')[2:], 2)):#0{10}x}"[0:6]
-                        #    + " 0x" + f"{(int(format((player_key ^ enemy_key ^ data5), '#034b')[2:], 2)):#0{10}x}"[-4:] + " " + f"{(int(format((player_key ^ enemy_key ^ data5), '#034b')[2:], 2)):#0{10}x}"[0:6] 
-                        #    + " Pokeball: " + str(k)
-                        #    + " Egg: " + format(player_key ^ enemy_key ^ data11, '#034b')[3:4] 
-                        #    + " Enemy Mon: " + enemy_mon[0])
                         
                         ace_out = " ACE species found: Player frame: {} Enemy Frame: {} Player TID/SID: {} {} Enemy TID/SID: {} {} Species: {}{} Held Item: {} Moves: 0x{} {} 0x{} {} Pokeball: {} Egg: {} Enemy Mon: {}".format(
                             str(i-1),
