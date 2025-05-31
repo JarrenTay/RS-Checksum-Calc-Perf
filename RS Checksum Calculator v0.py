@@ -5,6 +5,8 @@ with open('OTIDs.csv', newline='') as otids:
     reader = csv.reader(otids)
     otids_list = list(reader)
 from datetime import datetime
+import numpy as np
+from numba import jit, cuda
 
 startTime = datetime.now()
 
@@ -542,6 +544,7 @@ DATA_ORDER_E = 7
 DATA_ORDER_M = 10
 
 # Wurmple Decrypted Data
+# Converting this to a numpy array doubled the runtime
 data1 = 0
 data2 = 0
 data3 = 0
@@ -566,6 +569,30 @@ with open("checksumMatches.csv", "w") as checksumFile:
 with open("aceMatches.csv", "w") as aceFile:
     aceFile.write(CSV_HEADER)
 
+# Optimize checksum calculation by compiling it
+@jit(nopython=True)
+def calc_match(data1, data2, data3, data4, data5, data6, data7, data8, data9, data10, data11, data12, i, j, k, player_key, enemy_key):
+    original_checksum = ((data1 % 65536) + math.trunc(data1/65536) + (data2 % 65536) + math.trunc(data2/65536) + (data3 % 65536)
+        + math.trunc(data3/65536) + (data4 % 65536) + math.trunc(data4/65536) + (data5 % 65536) + math.trunc(data5/65536)
+        + (data6 % 65536) + math.trunc(data6/65536) + (data7 % 65536) + math.trunc(data7/65536) + (data8 % 65536)
+        + math.trunc(data8/65536) + (data9 % 65536) + math.trunc(data9/65536) + (data10 % 65536) + math.trunc(data10/65536)
+        + (data11 % 65536) + math.trunc(data11/65536) + (data12 % 65536) + math.trunc(data12/65536))%65536
+
+    keys_xored = player_key ^ enemy_key
+    new_checksum = ((keys_xored ^ data1 % 65536) + math.trunc((keys_xored ^ data1)/65536) + (keys_xored ^ data2 % 65536) + math.trunc((keys_xored ^ data2)/65536) + (keys_xored ^ data3 % 65536)
+        + math.trunc((keys_xored ^ data3)/65536) + (keys_xored ^ data4 % 65536) + math.trunc((keys_xored ^ data4)/65536) + (keys_xored ^ data5 % 65536) + math.trunc((keys_xored ^ data5)/65536)
+        + (keys_xored ^ data6 % 65536) + math.trunc((keys_xored ^ data6)/65536) + (keys_xored ^ data7 % 65536) + math.trunc((keys_xored ^ data7)/65536) + (keys_xored ^ data8 % 65536)
+        + math.trunc((keys_xored ^ data8)/65536) + (keys_xored ^ data9 % 65536) + math.trunc((keys_xored ^ data9)/65536) + (keys_xored ^ data10 % 65536) + math.trunc((keys_xored ^ data10)/65536)
+        + (keys_xored ^ data11 % 65536) + math.trunc((keys_xored ^ data11)/65536) + (keys_xored ^ data12 % 65536) + math.trunc((keys_xored ^ data12)/65536))%65536
+    
+    if new_checksum == original_checksum:
+        #ace = hex(int(format((keys_xored ^ data1), '#034b')[2:], 2))[0:2] + hex(int(format((keys_xored ^ data1), '#034b')[2:], 2))[-4:] == '0x9b1e'
+        #ace = format((keys_xored ^ data1), '#034b')[-16:] == '1001101100011110'
+        ace = ((keys_xored ^ data1) % 65536) == 39710
+        return (new_checksum == original_checksum, ace, keys_xored ^ data1, keys_xored ^ data4, keys_xored ^ data5, keys_xored ^ data11, i, j, k)
+    else:
+        return (False, False, 0, 0, 0, 0, 0, 0, 0)
+
  ############################################
  # Put your own TID/SID frame here (can find with PokeFinder)
  # Ideally searching through 20k trainer ids
@@ -577,12 +604,12 @@ for i in range(3576, 3577):
     # Put the range of frames you want to search for here
     #################################################
     for j in range(1, 4000):
-        if j % 100 == 0:
+        if j % 500 == 0:
             print("Checking frame {}".format(j))
         enemy_key = pid ^ (literal_eval(f"{int(otids_list[j][1]):#0{6}x}" + f"{int(otids_list[j][2]):#0{6}x}"[2::]))
-        for enemy_mon in enemy_data_list:
-            enemy_mon_zero = enemy_dict[enemy_mon[0]]
-            data_order_string = (data_order[(enemy_mon_zero[0]) % 24])
+        for enemy_data_index in range(len(enemy_data_list)):
+            enemy_mon_data = enemy_dict[enemy_data_list[enemy_data_index][0]]
+            data_order_string = (data_order[(enemy_mon_data[0]) % 24])
             for data_order_char_index in range(len(data_order_string)):
                 enemy_mon_index = 0
                 match data_order_string[data_order_char_index]:
@@ -597,40 +624,30 @@ for i in range(3576, 3577):
 
                 match data_order_char_index:
                     case 0:
-                        data1 = enemy_mon_zero[enemy_mon_index]
-                        data2 = enemy_mon_zero[enemy_mon_index + 1]
-                        data3 = enemy_mon_zero[enemy_mon_index + 2]
+                        data1 = enemy_mon_data[enemy_mon_index]
+                        data2 = enemy_mon_data[enemy_mon_index + 1]
+                        data3 = enemy_mon_data[enemy_mon_index + 2]
                     case 1:
-                        data4 = enemy_mon_zero[enemy_mon_index]
-                        data5 = enemy_mon_zero[enemy_mon_index + 1]
-                        data6 = enemy_mon_zero[enemy_mon_index + 2]
+                        data4 = enemy_mon_data[enemy_mon_index]
+                        data5 = enemy_mon_data[enemy_mon_index + 1]
+                        data6 = enemy_mon_data[enemy_mon_index + 2]
                     case 2:
-                        data7 = enemy_mon_zero[enemy_mon_index]
-                        data8 = enemy_mon_zero[enemy_mon_index + 1]
-                        data9 = enemy_mon_zero[enemy_mon_index + 2]
+                        data7 = enemy_mon_data[enemy_mon_index]
+                        data8 = enemy_mon_data[enemy_mon_index + 1]
+                        data9 = enemy_mon_data[enemy_mon_index + 2]
                     case 3:
-                        data10 = enemy_mon_zero[enemy_mon_index]
-                        data11 = enemy_mon_zero[enemy_mon_index + 1]
-                        data12 = enemy_mon_zero[enemy_mon_index + 2]
+                        data10 = enemy_mon_data[enemy_mon_index]
+                        data11 = enemy_mon_data[enemy_mon_index + 1]
+                        data12 = enemy_mon_data[enemy_mon_index + 2]
             
             for k in range(1, 13):
                 #checking each pokeball
                 data10 = int(format(data10, '#034b')[2:3] + format(k, '#06b')[2:] + format(data10, '#034b')[7:], 2)
+                #converting to using np.bitwise_xor and np.mod made it extremely slow
 
-                original_checksum = ((data1 % 65536) + math.trunc(data1/65536) + (data2 % 65536) + math.trunc(data2/65536) + (data3 % 65536)
-                        + math.trunc(data3/65536) + (data4 % 65536) + math.trunc(data4/65536) + (data5 % 65536) + math.trunc(data5/65536)
-                        + (data6 % 65536) + math.trunc(data6/65536) + (data7 % 65536) + math.trunc(data7/65536) + (data8 % 65536)
-                        + math.trunc(data8/65536) + (data9 % 65536) + math.trunc(data9/65536) + (data10 % 65536) + math.trunc(data10/65536)
-                        + (data11 % 65536) + math.trunc(data11/65536) + (data12 % 65536) + math.trunc(data12/65536))%65536
-
-                keys_xored = player_key ^ enemy_key
-                new_checksum = ((keys_xored ^ data1 % 65536) + math.trunc((keys_xored ^ data1)/65536) + (keys_xored ^ data2 % 65536) + math.trunc((keys_xored ^ data2)/65536) + (keys_xored ^ data3 % 65536)
-                + math.trunc((keys_xored ^ data3)/65536) + (keys_xored ^ data4 % 65536) + math.trunc((keys_xored ^ data4)/65536) + (keys_xored ^ data5 % 65536) + math.trunc((keys_xored ^ data5)/65536)
-                + (keys_xored ^ data6 % 65536) + math.trunc((keys_xored ^ data6)/65536) + (keys_xored ^ data7 % 65536) + math.trunc((keys_xored ^ data7)/65536) + (keys_xored ^ data8 % 65536)
-                + math.trunc((keys_xored ^ data8)/65536) + (keys_xored ^ data9 % 65536) + math.trunc((keys_xored ^ data9)/65536) + (keys_xored ^ data10 % 65536) + math.trunc((keys_xored ^ data10)/65536)
-                + (keys_xored ^ data11 % 65536) + math.trunc((keys_xored ^ data11)/65536) + (keys_xored ^ data12 % 65536) + math.trunc((keys_xored ^ data12)/65536))%65536
-                #print("Enemy frame " + str(j) + " Enemy Key: " + str(enemy_key) + " New Checksum: " + str(new_checksum))
-                if new_checksum == original_checksum:
+                match = calc_match(data1, data2, data3, data4, data5, data6, data7, data8, data9, data10, data11, data12, i, j, k, player_key, enemy_key)
+                #return (new_checksum == original_checksum, ace, keys_xored ^ data1, keys_xored ^ data4, keys_xored ^ data5, i, j, k)
+                if match[0]:
                     #print(original_checksum)
                     #valid_combinations.append([i-1, j-1])
                     #if ("0x" + f"{(int(format((player_key ^ enemy_key ^ data4), '#034b')[2:], 2)):#0{10}x}"[-4:] == '0x6d83' or f"{(int(format((player_key ^ enemy_key ^ data4), '#034b')[2:], 2)):#0{10}x}"[0:6] == '0x6d83' or "0x" + f"{(int(format((player_key ^ enemy_key ^ data5), '#034b')[2:], 2)):#0{10}x}"[-4:] == '0x6d83' or f"{(int(format((player_key ^ enemy_key ^ data5), '#034b')[2:], 2)):#0{10}x}"[0:6] == '0x6d83'):
@@ -645,21 +662,21 @@ for i in range(3576, 3577):
                         otids_list[i][2],
                         otids_list[j][2],
                         otids_list[j][1],
-                        hex(int(format((keys_xored ^ data1), '#034b')[2:], 2))[0:2],
-                        hex(int(format((keys_xored ^ data1), '#034b')[2:], 2))[-4:],
-                        f"{(int(format((keys_xored ^ data1), '#034b')[2:], 2)):#0{10}x}"[0:6], 
-                        f"{(int(format((keys_xored ^ data4), '#034b')[2:], 2)):#0{10}x}"[-4:],
-                        f"{(int(format((keys_xored ^ data4), '#034b')[2:], 2)):#0{10}x}"[0:6],
-                        f"{(int(format((keys_xored ^ data5), '#034b')[2:], 2)):#0{10}x}"[-4:],
-                        f"{(int(format((keys_xored ^ data5), '#034b')[2:], 2)):#0{10}x}"[0:6], 
+                        hex(int(format((match[2]), '#034b')[2:], 2))[0:2],
+                        hex(int(format((match[2]), '#034b')[2:], 2))[-4:],
+                        f"{(int(format((match[2]), '#034b')[2:], 2)):#0{10}x}"[0:6], 
+                        f"{(int(format((match[3]), '#034b')[2:], 2)):#0{10}x}"[-4:],
+                        f"{(int(format((match[3]), '#034b')[2:], 2)):#0{10}x}"[0:6],
+                        f"{(int(format((match[4]), '#034b')[2:], 2)):#0{10}x}"[-4:],
+                        f"{(int(format((match[4]), '#034b')[2:], 2)):#0{10}x}"[0:6], 
                         str(k),
-                        format(keys_xored ^ data11, '#034b')[3:4],
-                        enemy_mon[0])
+                        format(match[5], '#034b')[3:4],
+                        enemy_data_list[enemy_data_index][0])
                     
                     with open("checksumMatches.csv", "a") as checksumFile:
                         checksumFile.write(match_out)
                     
-                    if hex(int(format((keys_xored ^ data1), '#034b')[2:], 2))[0:2] + hex(int(format((keys_xored ^ data1), '#034b')[2:], 2))[-4:] == '0x9b1e':
+                    if match[1]:
                         with open("aceMatches.csv", "a") as aceFile:
                             aceFile.write(match_out)
                     break
@@ -668,3 +685,4 @@ for i in range(3576, 3577):
 print("Time ran: ")
 print(datetime.now() - startTime)
 print("Compared to baseline of 2:40 for 1 TID and 4000 frames")
+print("Where checksums take 1:44 and everything else takes 0:36")
