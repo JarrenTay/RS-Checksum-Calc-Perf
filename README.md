@@ -40,7 +40,9 @@
 Note: currently it is hard coded to search on TID 3575 and frames 0-3999. Edit the calculateChecksumMatches() function call in main() to change these parameters.
 In a command prompt, navigate to the directory containing RSChecksumCalculator.exe and call 
 
-`.\RSChecksumCalculator.exe`
+`.\RSChecksumCalculator.exe <first TID to calculate> <last TID to calculate> <number of frames to calculate>`
+
+example that calculates 4000 frames for TID 3575 and 3576: `.\RSChecksumCalculator.exe 3575 3576 4000 `
 
 Your results should appear in a csv file named cppMatches.csv and cppAces.csv
 
