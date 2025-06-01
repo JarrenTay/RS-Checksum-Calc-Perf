@@ -30,10 +30,14 @@ struct ChecksumMatchResults {
     long long keyXorData10;
 };
 
-int main() {
+int main(int argc, char* argv[]) {
     steady_clock::time_point start = steady_clock::now();
+    
+    // Argument Parsing
+    vector<int> arguments = parseArguments(argc, argv);
+    handleArguments(arguments);
 
-
+    // Parse Data Files
     vector<string> enemyList = {};
     map<string, vector<long long>> enemyDict = dataFileToMap("enemyDataList.csv", enemyList);
     vector<vector<int>> otidVector = otidFileToVector("OTIDs.csv");
@@ -44,14 +48,92 @@ int main() {
         "MGAE", "MGEA", "MAGE", "MAEG", "MEGA", "MEAG"
     };
 
-    // Edit this function call to search more TIDs and frames.
-    calculateChecksumMatches(3575, 3577, 4000, dataOrder, enemyList, enemyDict, otidVector);
+    // Calculate Checksums
+    cout << "Executing with TIDs " << arguments[0] << " to " << arguments[1] << " (inclusive) and the first " << arguments[2] << " frames." << endl;
+    calculateChecksumMatches(arguments[0], arguments[1], arguments[2], dataOrder, enemyList, enemyDict, otidVector);
 
+    // Check Time Elapsed
     steady_clock::time_point end = steady_clock::now();
     cout << "Time elapsed: " << (duration_cast<microseconds> (end - start).count()) / 1000000 << " seconds" << std::endl;
     return 0;
 }
 
+/* ******************************************************
+ * Purpose: Parses passed arguments and assigns defaults
+ * ******************************************************
+ * Parameters:
+ *   argc: Number of arguments
+ *   argv: Char* array of arguments
+ * ******************************************************
+*/
+vector<int> parseArguments(int argc, char* argv[]) {
+    vector<int> arguments = vector<int>();
+    if (argc >= 2) {
+        string arg = argv[1];
+        int startingTid = stoi(arg);
+        arguments.push_back(startingTid);
+    } else {
+        arguments.push_back(3575);
+    }
+    if (argc >= 3) {
+        string arg = argv[2];
+        int endingTid = stoi(arg);
+        arguments.push_back(endingTid);
+    } else {
+        arguments.push_back(3575);
+    }
+    if (argc >= 4) {
+        string arg = argv[3];
+        int frameCount = stoi(arg);
+        arguments.push_back(frameCount);
+    } else {
+        arguments.push_back(4000);
+    }
+    return arguments;
+}
+
+/* ******************************************************
+ * Purpose: Checks for tid and frame argument validity
+ * ******************************************************
+ * Parameters:
+ *   args: Vector [TID start, TID end, Frame amount]
+ * ******************************************************
+*/
+void handleArguments(vector<int> &args) {
+    if (args[0] < 0) {
+        cout << "TID lower bound exceeded, set to 0." << endl;
+        args[0] = 0;
+    }
+    if (args[0] > 100000) {
+        cout << "TID upper bound exceeded, set to 100000." << endl;
+        args[0] = 100000;
+    }
+    if (args[1] < args[0]) {
+        cout << "TID range error, upper bound set to lower bound." << endl;
+        args[1] = args[0];
+    }
+    if (args[1] > 100000) {
+        cout << "TID upper bound exceeded, set to 100000." << endl;
+        args[1] = 100000;
+    }
+    if (args[2] < 1) {
+        cout << "Frame lower bound exceeded, set to 1." << endl;
+        args[2] = 1;
+    }
+    if (args[2] > 100000) {
+        cout << "Frame upper bound exceeded, set to 100000." << endl;
+        args[2] = 100000;
+    }
+}
+
+/* ******************************************************
+ * Purpose: Parses enemyDataList.csv
+ * ******************************************************
+ * Parameters:
+ *   fileName: Name of file containing enemy data
+ *   enemyList: Outputs vector of enemy mons
+ * ******************************************************
+*/
 map<string, vector<long long>> dataFileToMap(string fileName, vector<string> &enemyList) {
     string enemyDataRawLine = "";
     ifstream enemyDataFile(fileName);
@@ -77,6 +159,13 @@ map<string, vector<long long>> dataFileToMap(string fileName, vector<string> &en
     return enemyDict;
 }
 
+/* ******************************************************
+ * Purpose: Converts a hex string to little endian
+ * ******************************************************
+ * Parameters:
+ *   hexString: Hex string to convert
+ * ******************************************************
+*/
 long long hexStringToIntLittleEndian(string hexString) {
     string reversedHexString = "";
     for (int i = 0; i * 2 < hexString.length(); i++) {
@@ -85,6 +174,13 @@ long long hexStringToIntLittleEndian(string hexString) {
     return stoll(reversedHexString, 0, 16);
 }
 
+/* ******************************************************
+ * Purpose: Parses Otid file into a 2d array
+ * ******************************************************
+ * Parameters:
+ *   fileName: Hex string to convert
+ * ******************************************************
+*/
 vector<vector<int>> otidFileToVector(string fileName) {
     string otidDataRawLine = "";
     ifstream otidDataFile(fileName);
@@ -115,6 +211,20 @@ vector<vector<int>> otidFileToVector(string fileName) {
     return otidVector;
 }
 
+/* ******************************************************
+ * Purpose: Loops through TIDs and frames and calcs
+ *   checksums for each combination.
+ * ******************************************************
+ * Parameters:
+ *   trainerIdStart: first TID to calc
+ *   trainerIdEnd: last TID to calc
+ *   frames: num frames to calc
+ *   dataOrder: idk what this is
+ *   enemyList: vector of enemy mons
+ *   enemyDict: map of enemy mon to enemy data
+ *   otidVector: vector of otid data
+ * ******************************************************
+*/
 void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, string dataOrder[], vector<string> &enemyList, map<string, vector<long long>> enemyDict, vector<vector<int>> otidVector) {
 
     try {
@@ -128,7 +238,7 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
     aceFile << CSV_HEADER << endl;
 
     // Note, python version doesn't allow 1 and does subtraction to account for header column
-    for (int tid = trainerIdStart; tid < trainerIdEnd; tid++) {
+    for (int tid = trainerIdStart; tid <= trainerIdEnd; tid++) {
         cout << "Checking tid " << tid << endl;
 
         string playerHex = padStringNumber(format("0x{:4x}", otidVector[tid][2]) + format("{:4x}", otidVector[tid][1]));
@@ -228,6 +338,16 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
     aceFile.close();
 }
 
+/* ******************************************************
+ * Purpose: Calculates checksum based on data array and
+ *   player and enemy key
+ * ******************************************************
+ * Parameters:
+ *   data: Array of enemy mon data
+ *   playerKey: Player key
+ *   enemyKey: Enemy key
+ * ******************************************************
+*/
 ChecksumMatchResults calculateMatch(long long data[], long long playerKey, long long enemyKey) {
 
     long long originalChecksum = ((data[0] % 65536) + (data[0] / 65536) + (data[1] % 65536) + (data[1] / 65536) + (data[2] % 65536)
@@ -270,6 +390,13 @@ ChecksumMatchResults calculateMatch(long long data[], long long playerKey, long 
     }
 }
 
+/* ******************************************************
+ * Purpose: Replaces spaces in a number string with 0
+ * ******************************************************
+ * Parameters:
+ *   number: string to pad
+ * ******************************************************
+*/
 string padStringNumber(string number) {
     string outNumber = number;
     for (int charIndex = 0; charIndex < number.length(); charIndex++) {

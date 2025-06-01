@@ -6,7 +6,9 @@
 
 using namespace std;
 
-int main();
+int main(int argc, char* argv[]);
+vector<int> parseArguments(int argc, char* argv[]);
+void handleArguments(vector<int> &args);
 map<string, vector<long long>> dataFileToMap(string fileName, vector<string> &enemyList);
 long long hexStringToIntLittleEndian(string hexString);
 vector<vector<int>> otidFileToVector(string fileName);
