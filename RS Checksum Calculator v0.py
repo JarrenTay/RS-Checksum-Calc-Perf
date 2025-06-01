@@ -584,7 +584,7 @@ def calc_match(data1, data2, data3, data4, data5, data6, data7, data8, data9, da
         + (keys_xored ^ data6 % 65536) + math.trunc((keys_xored ^ data6)/65536) + (keys_xored ^ data7 % 65536) + math.trunc((keys_xored ^ data7)/65536) + (keys_xored ^ data8 % 65536)
         + math.trunc((keys_xored ^ data8)/65536) + (keys_xored ^ data9 % 65536) + math.trunc((keys_xored ^ data9)/65536) + (keys_xored ^ data10 % 65536) + math.trunc((keys_xored ^ data10)/65536)
         + (keys_xored ^ data11 % 65536) + math.trunc((keys_xored ^ data11)/65536) + (keys_xored ^ data12 % 65536) + math.trunc((keys_xored ^ data12)/65536))%65536
-    
+
     if new_checksum == original_checksum:
         #ace = hex(int(format((keys_xored ^ data1), '#034b')[2:], 2))[0:2] + hex(int(format((keys_xored ^ data1), '#034b')[2:], 2))[-4:] == '0x9b1e'
         #ace = format((keys_xored ^ data1), '#034b')[-16:] == '1001101100011110'
@@ -597,7 +597,7 @@ def calc_match(data1, data2, data3, data4, data5, data6, data7, data8, data9, da
  # Put your own TID/SID frame here (can find with PokeFinder)
  # Ideally searching through 20k trainer ids
  ############################################
-for i in range(3576, 3577):
+for i in range(3576, 3578):
     player_key = pid ^ (literal_eval(f"{int(otids_list[i][2]):#0{6}x}" + f"{int(otids_list[i][1]):#0{6}x}"[2::]))
     #print("Player frame " + str(i-1) + " Player Key: " + str(player_key))
     #################################################
@@ -639,6 +639,8 @@ for i in range(3576, 3577):
                         data10 = enemy_mon_data[enemy_mon_index]
                         data11 = enemy_mon_data[enemy_mon_index + 1]
                         data12 = enemy_mon_data[enemy_mon_index + 2]
+                
+                # print(str(data1) + " " + str(data2) + " " + str(data3) + " " + str(data4) + " " + str(data5) + " " + str(data6) + " " + str(data7) + " " + str(data8) + " " + str(data9) + " " + str(data10) + " " + str(data11) + " " + str(data12))
             
             for k in range(1, 13):
                 #checking each pokeball
