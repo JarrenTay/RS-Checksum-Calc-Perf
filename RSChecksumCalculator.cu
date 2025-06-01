@@ -107,8 +107,12 @@ int main(int argc, char* argv[]) {
 
     // Calculate Checksums
     cout << "Executing with TIDs " << arguments[0] << " to " << arguments[1] << " (inclusive) and the first " << arguments[2] << " frames." << endl;
+    cout << "USING CUDA" << endl;
+    printf("test\n");
     calculateChecksumMatches(arguments[0], arguments[1], arguments[2], dataOrder, enemyList, enemyDict, otidVector);
-
+    printf("testB\n");
+    cout << "WHY" << endl;
+    fflush(stdout);
     // Check Time Elapsed
     steady_clock::time_point end = steady_clock::now();
     cout << "Time elapsed: " << (duration_cast<microseconds> (end - start).count()) / 1000000 << " seconds" << std::endl;
@@ -327,6 +331,7 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
             data[14] = tid;
             data[15] = frame;
 
+
             // Loop through all mons
             for (int enemyListIndex = 0; enemyListIndex < enemyList.size(); enemyListIndex++) {
                 string enemyMon = enemyList[enemyListIndex];
@@ -365,55 +370,44 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
                         dataTotal[(frame * enemyListIndex * (pokeballIndex - 1)) + dataIndex] = data[dataIndex];
                     }
                 }
+
+                for (int i = 0; i < DATA_SIZE; i++) {
+                    cout << data[i] << " ";
+                }
+                cout << endl;
             }
         }
 
         calculateMatchCuda<<<1, 1>>>(entryCount, dataTotal, outputTotal);
 
         cudaDeviceSynchronize();
-/*
-        for (long long entry = 0; entry < entries; entry++) {
+
+        for (long long entry = 0; entry < entryCount; entry++) {
             if (outputTotal[(entry * OUTPUT_SIZE) + 0]) {
-                string matchOut = format("{},{},{} {},{} {},0x{},{},0x{} {} 0x{} {},{},{},{}\n",
-                    to_string(tid),
-                    to_string(frame),
-                    otidVector[tid][1],
-                    otidVector[tid][2],
-                    otidVector[frame][2],
-                    otidVector[frame][1],
-                    padStringNumber(format("{:8x}", matchResults.keyXorData0).substr(4, 4)),
-                    padStringNumber(format("0x{:8x}", matchResults.keyXorData0).substr(0, 6)),
-                    padStringNumber(format("0x{:8x}", matchResults.keyXorData3).substr(6)),
-                    padStringNumber(format("0x{:8x}", matchResults.keyXorData3).substr(0, 6)),
-                    padStringNumber(format("0x{:8x}", matchResults.keyXorData4).substr(6)),
-                    padStringNumber(format("0x{:8x}", matchResults.keyXorData4).substr(0, 6)),
-                    to_string(pokeballIndex),
-                    padStringNumber(format("{:34b}", matchResults.keyXorData10).substr(3, 1)),
-                    enemyMon);
+                string matchOut = 
+                    to_string(tid) + "," +
+                    to_string(outputTotal[(entry * OUTPUT_SIZE) + 7]) + "," +
+                    to_string(otidVector[tid][1]) + "," +
+                    to_string(otidVector[tid][2]) + "," +
+                    to_string(otidVector[outputTotal[(entry * OUTPUT_SIZE) + 7]][2]) + "," +
+                    to_string(otidVector[outputTotal[(entry * OUTPUT_SIZE) + 7]][1]) + "," +
+                    padStringNumber(intToHex(outputTotal[(entry * OUTPUT_SIZE) + 2], 8).substr(4, 4)) + "," +
+                    padStringNumber(intToHex(outputTotal[(entry * OUTPUT_SIZE) + 2], 8).substr(0, 6)) + "," +
+                    padStringNumber(intToHex(outputTotal[(entry * OUTPUT_SIZE) + 3], 8).substr(6)) + "," +
+                    padStringNumber(intToHex(outputTotal[(entry * OUTPUT_SIZE) + 3], 8).substr(0, 6)) + "," +
+                    padStringNumber(intToHex(outputTotal[(entry * OUTPUT_SIZE) + 4], 8).substr(6)) + "," +
+                    padStringNumber(intToHex(outputTotal[(entry * OUTPUT_SIZE) + 4], 8).substr(0, 6)) + "," +
+                    to_string(outputTotal[(entry * OUTPUT_SIZE) + 8]) + "," +
+                    padStringNumber(bitset<8>(outputTotal[(entry * OUTPUT_SIZE) + 5]).to_string().substr(1, 1)) + "," +
+                    enemyList[outputTotal[(entry * OUTPUT_SIZE) + 9]];
                 matchFile << matchOut;
 
                 if (outputTotal[(entry * OUTPUT_SIZE) + 1]) {
-                    string aceOut = format("{},{},{} {},{} {},0x{},{},0x{} {} 0x{} {},{},{},{}\n",
-                        to_string(tid),
-                        to_string(frame),
-                        otidVector[tid][1],
-                        otidVector[tid][2],
-                        otidVector[frame][2],
-                        otidVector[frame][1],
-                        padStringNumber(format("{:8x}", matchResults.keyXorData0).substr(4, 4)),
-                        padStringNumber(format("0x{:8x}", matchResults.keyXorData0).substr(0, 6)),
-                        padStringNumber(format("0x{:8x}", matchResults.keyXorData3).substr(6)),
-                        padStringNumber(format("0x{:8x}", matchResults.keyXorData3).substr(0, 6)),
-                        padStringNumber(format("0x{:8x}", matchResults.keyXorData4).substr(6)),
-                        padStringNumber(format("0x{:8x}", matchResults.keyXorData4).substr(0, 6)),
-                        to_string(pokeballIndex),
-                        padStringNumber(format("{:34b}", matchResults.keyXorData10).substr(3, 1)),
-                        enemyMon);
-                    aceFile << aceOut;
+                    aceFile << matchOut;
                 }
             }
         }
-*/
+
         cudaFree(dataTotal);
         cudaFree(outputTotal);
         delete [] data;
