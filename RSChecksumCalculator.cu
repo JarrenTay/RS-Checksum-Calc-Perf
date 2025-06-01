@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 #include <cstdint>
-#include <format>
+#include <bitset>
 #include <filesystem>
 #include <chrono>
 #include "RSChecksumCalculator.h"
@@ -32,6 +32,60 @@ struct ChecksumMatchResults {
     long long keyXorData4;
     long long keyXorData10;
 };
+
+/* ******************************************************
+ * Purpose: Calculates checksum based on data array and
+ *   player and enemy key
+ * ******************************************************
+ * Parameters:
+ *   data: Array of enemy mon data
+ *   playerKey: Player key
+ *   enemyKey: Enemy key
+ * ******************************************************
+*/
+__global__
+void calculateMatchCuda(long long entries, long long *dataTotal, long long *outputTotal) {
+    for (long long entry = 0; entry < entries; entry++) {
+        long long originalChecksum = ((dataTotal[(entry * DATA_SIZE) + 0] % 65536) + (dataTotal[(entry * DATA_SIZE) + 0] / 65536) + (dataTotal[(entry * DATA_SIZE) + 1] % 65536) + (dataTotal[(entry * DATA_SIZE) + 1] / 65536) + (dataTotal[(entry * DATA_SIZE) + 2] % 65536)
+            + (dataTotal[(entry * DATA_SIZE) + 2] / 65536) + (dataTotal[(entry * DATA_SIZE) + 3] % 65536) + (dataTotal[(entry * DATA_SIZE) + 3] / 65536) + (dataTotal[(entry * DATA_SIZE) + 4] % 65536) + (dataTotal[(entry * DATA_SIZE) + 4] / 65536)
+            + (dataTotal[(entry * DATA_SIZE) + 5] % 65536) + (dataTotal[(entry * DATA_SIZE) + 5] / 65536) + (dataTotal[(entry * DATA_SIZE) + 6] % 65536) + (dataTotal[(entry * DATA_SIZE) + 6] / 65536) + (dataTotal[(entry * DATA_SIZE) + 7] % 65536)
+            + (dataTotal[(entry * DATA_SIZE) + 7] / 65536) + (dataTotal[(entry * DATA_SIZE) + 8] % 65536) + (dataTotal[(entry * DATA_SIZE) + 8] / 65536) + (dataTotal[(entry * DATA_SIZE) + 9] % 65536) + (dataTotal[(entry * DATA_SIZE) + 9] / 65536)
+            + (dataTotal[(entry * DATA_SIZE) + 10] % 65536) + (dataTotal[(entry * DATA_SIZE) + 10] / 65536) + (dataTotal[(entry * DATA_SIZE) + 11] % 65536) + (dataTotal[(entry * DATA_SIZE) + 11] / 65536)) % 65536;
+
+        long long keysXored = dataTotal[(entry * DATA_SIZE) + 12] ^ dataTotal[(entry * DATA_SIZE) + 13];
+
+        long long newChecksum = (((keysXored ^ dataTotal[(entry * DATA_SIZE) + 0]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 0]) / 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 1]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 1]) / 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 2]) % 65536)
+            + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 2]) / 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 3]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 3]) / 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 4]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 4]) / 65536)
+            + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 5]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 5]) / 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 6]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 6]) / 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 7]) % 65536)
+            + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 7]) / 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 8]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 8]) / 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 9]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 9]) / 65536)
+            + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 10]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 10]) / 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 11]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 11]) / 65536)) % 65536;
+
+        if (originalChecksum == newChecksum) {
+            bool ace = (((keysXored ^ dataTotal[(entry * DATA_SIZE) + 0]) % 65536) == 39710);
+            outputTotal[(entry * OUTPUT_SIZE) + 0] = 1;                                               // long long match;
+            outputTotal[(entry * OUTPUT_SIZE) + 1] = ace;                                             // long long ace;
+            outputTotal[(entry * OUTPUT_SIZE) + 2] = keysXored ^ dataTotal[(entry * DATA_SIZE) + 0];  // long long keyXorData0;
+            outputTotal[(entry * OUTPUT_SIZE) + 3] = keysXored ^ dataTotal[(entry * DATA_SIZE) + 3];  // long long keyXorData3;
+            outputTotal[(entry * OUTPUT_SIZE) + 4] = keysXored ^ dataTotal[(entry * DATA_SIZE) + 4];  // long long keyXorData4;
+            outputTotal[(entry * OUTPUT_SIZE) + 5] = keysXored ^ dataTotal[(entry * DATA_SIZE) + 10]; // long long keyXorData10;
+            outputTotal[(entry * OUTPUT_SIZE) + 6] = dataTotal[(entry * DATA_SIZE) + 14];             // long long tid;
+            outputTotal[(entry * OUTPUT_SIZE) + 7] = dataTotal[(entry * DATA_SIZE) + 15];             // long long frame;
+            outputTotal[(entry * OUTPUT_SIZE) + 8] = dataTotal[(entry * DATA_SIZE) + 16];             // long long pokeballIndex;
+            outputTotal[(entry * OUTPUT_SIZE) + 9] = dataTotal[(entry * DATA_SIZE) + 17];             // long long enemyListIndex;
+        } else {
+            outputTotal[(entry * OUTPUT_SIZE) + 0] = 0;  // long long match;
+            outputTotal[(entry * OUTPUT_SIZE) + 1] = 0;  // long long ace;
+            outputTotal[(entry * OUTPUT_SIZE) + 2] = 0;  // long long keyXorData0;
+            outputTotal[(entry * OUTPUT_SIZE) + 3] = 0;  // long long keyXorData3;
+            outputTotal[(entry * OUTPUT_SIZE) + 4] = 0;  // long long keyXorData4;
+            outputTotal[(entry * OUTPUT_SIZE) + 5] = 0;  // long long keyXorData10;
+            outputTotal[(entry * OUTPUT_SIZE) + 6] = 0;  // long long tid;
+            outputTotal[(entry * OUTPUT_SIZE) + 7] = 0;  // long long frame;
+            outputTotal[(entry * OUTPUT_SIZE) + 8] = 0;  // long long pokeballIndex;
+            outputTotal[(entry * OUTPUT_SIZE) + 9] = 0;  // long long enemyListIndex;
+        }
+    }
+}
 
 int main(int argc, char* argv[]) {
     steady_clock::time_point start = steady_clock::now();
@@ -244,7 +298,7 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
     for (int tid = trainerIdStart; tid <= trainerIdEnd; tid++) {
         cout << "Checking tid " << tid << endl;
 
-        string playerHex = padStringNumber(format("0x{:4x}", otidVector[tid][2]) + format("{:4x}", otidVector[tid][1]));
+        string playerHex = padStringNumber(intToHex(otidVector[tid][2], 6) + intToHex(otidVector[tid][1], 6).substr(2));
         long long playerLongLong = stoll(playerHex, 0, 16);
         long long playerKey = PID ^ playerLongLong;
         long long entryCount = frames * enemyList.size() * POKEBALL_COUNT;
@@ -264,7 +318,7 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
                 cout << "Checking frame " << frame << endl;
             }
 
-            string enemyHex = padStringNumber(format("0x{:4x}", otidVector[frame][1]) + format("{:4x}", otidVector[frame][2]));
+            string enemyHex = padStringNumber(intToHex(otidVector[frame][1], 6) + intToHex(otidVector[frame][2], 6).substr(2));
             long long enemyLongLong = stoll(enemyHex, 0, 16);
             long long enemyKey = PID ^ enemyLongLong;
 
@@ -304,7 +358,7 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
 
                 // Loop through pokeballs. We quit as soon as we find a match, even though there are likely more of the same pokeball.
                 for (int pokeballIndex = 1; pokeballIndex < 13; pokeballIndex++) {
-                    data[9] = stoll(padStringNumber(format("{:34b}", data[9]).substr(2, 1) + format("{:6b}", pokeballIndex).substr(2) + format("{:34b}", data[9]).substr(7)), 0, 2);
+                    data[9] = stoll(padStringNumber(bitset<8>(data[9]).to_string().substr(0, 1) + bitset<8>(pokeballIndex).to_string().substr(28, 1) + bitset<8>(data[9]).to_string().substr(5)), 0, 2);
                     data[16] = pokeballIndex;
 
                     for (int dataIndex = 0; dataIndex < DATA_SIZE; data++) {
@@ -317,28 +371,10 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
         calculateMatchCuda<<<1, 1>>>(entryCount, dataTotal, outputTotal);
 
         cudaDeviceSynchronize();
-
-        if (matchResults.match) {
-            string matchOut = format("{},{},{} {},{} {},0x{},{},0x{} {} 0x{} {},{},{},{}\n",
-                to_string(tid),
-                to_string(frame),
-                otidVector[tid][1],
-                otidVector[tid][2],
-                otidVector[frame][2],
-                otidVector[frame][1],
-                padStringNumber(format("{:8x}", matchResults.keyXorData0).substr(4, 4)),
-                padStringNumber(format("0x{:8x}", matchResults.keyXorData0).substr(0, 6)),
-                padStringNumber(format("0x{:8x}", matchResults.keyXorData3).substr(6)),
-                padStringNumber(format("0x{:8x}", matchResults.keyXorData3).substr(0, 6)),
-                padStringNumber(format("0x{:8x}", matchResults.keyXorData4).substr(6)),
-                padStringNumber(format("0x{:8x}", matchResults.keyXorData4).substr(0, 6)),
-                to_string(pokeballIndex),
-                padStringNumber(format("{:34b}", matchResults.keyXorData10).substr(3, 1)),
-                enemyMon);
-            matchFile << matchOut;
-
-            if (matchResults.ace) {
-                string aceOut = format("{},{},{} {},{} {},0x{},{},0x{} {} 0x{} {},{},{},{}\n",
+/*
+        for (long long entry = 0; entry < entries; entry++) {
+            if (outputTotal[(entry * OUTPUT_SIZE) + 0]) {
+                string matchOut = format("{},{},{} {},{} {},0x{},{},0x{} {} 0x{} {},{},{},{}\n",
                     to_string(tid),
                     to_string(frame),
                     otidVector[tid][1],
@@ -354,12 +390,30 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
                     to_string(pokeballIndex),
                     padStringNumber(format("{:34b}", matchResults.keyXorData10).substr(3, 1)),
                     enemyMon);
-                aceFile << aceOut;
+                matchFile << matchOut;
+
+                if (outputTotal[(entry * OUTPUT_SIZE) + 1]) {
+                    string aceOut = format("{},{},{} {},{} {},0x{},{},0x{} {} 0x{} {},{},{},{}\n",
+                        to_string(tid),
+                        to_string(frame),
+                        otidVector[tid][1],
+                        otidVector[tid][2],
+                        otidVector[frame][2],
+                        otidVector[frame][1],
+                        padStringNumber(format("{:8x}", matchResults.keyXorData0).substr(4, 4)),
+                        padStringNumber(format("0x{:8x}", matchResults.keyXorData0).substr(0, 6)),
+                        padStringNumber(format("0x{:8x}", matchResults.keyXorData3).substr(6)),
+                        padStringNumber(format("0x{:8x}", matchResults.keyXorData3).substr(0, 6)),
+                        padStringNumber(format("0x{:8x}", matchResults.keyXorData4).substr(6)),
+                        padStringNumber(format("0x{:8x}", matchResults.keyXorData4).substr(0, 6)),
+                        to_string(pokeballIndex),
+                        padStringNumber(format("{:34b}", matchResults.keyXorData10).substr(3, 1)),
+                        enemyMon);
+                    aceFile << aceOut;
+                }
             }
-
-            break;
         }
-
+*/
         cudaFree(dataTotal);
         cudaFree(outputTotal);
         delete [] data;
@@ -367,60 +421,6 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
 
     matchFile.close();
     aceFile.close();
-}
-
-/* ******************************************************
- * Purpose: Calculates checksum based on data array and
- *   player and enemy key
- * ******************************************************
- * Parameters:
- *   data: Array of enemy mon data
- *   playerKey: Player key
- *   enemyKey: Enemy key
- * ******************************************************
-*/
-__global__
-void calculateMatchCuda(long long entries, long long **dataTotal, long long **outputTotal) {
-    for (long long entry = 0; entry < entries; entry++) {
-        long long originalChecksum = ((dataTotal[(entry * DATA_SIZE) + 0] % 65536) + (dataTotal[(entry * DATA_SIZE) + 0] / 65536) + (dataTotal[(entry * DATA_SIZE) + 1] % 65536) + (dataTotal[(entry * DATA_SIZE) + 1] / 65536) + (dataTotal[(entry * DATA_SIZE) + 2] % 65536)
-            + (dataTotal[(entry * DATA_SIZE) + 2] / 65536) + (dataTotal[(entry * DATA_SIZE) + 3] % 65536) + (dataTotal[(entry * DATA_SIZE) + 3] / 65536) + (dataTotal[(entry * DATA_SIZE) + 4] % 65536) + (dataTotal[(entry * DATA_SIZE) + 4] / 65536)
-            + (dataTotal[(entry * DATA_SIZE) + 5] % 65536) + (dataTotal[(entry * DATA_SIZE) + 5] / 65536) + (dataTotal[(entry * DATA_SIZE) + 6] % 65536) + (dataTotal[(entry * DATA_SIZE) + 6] / 65536) + (dataTotal[(entry * DATA_SIZE) + 7] % 65536)
-            + (dataTotal[(entry * DATA_SIZE) + 7] / 65536) + (dataTotal[(entry * DATA_SIZE) + 8] % 65536) + (dataTotal[(entry * DATA_SIZE) + 8] / 65536) + (dataTotal[(entry * DATA_SIZE) + 9] % 65536) + (dataTotal[(entry * DATA_SIZE) + 9] / 65536)
-            + (dataTotal[(entry * DATA_SIZE) + 10] % 65536) + (dataTotal[(entry * DATA_SIZE) + 10] / 65536) + (dataTotal[(entry * DATA_SIZE) + 11] % 65536) + (dataTotal[(entry * DATA_SIZE) + 11] / 65536)) % 65536;
-
-        long long keysXored = dataTotal[(entry * DATA_SIZE) + 12] ^ dataTotal[(entry * DATA_SIZE) + 13];
-
-        long long newChecksum = (((keysXored ^ dataTotal[(entry * DATA_SIZE) + 0]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 0]) / 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 1]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 1]) / 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 2]) % 65536)
-            + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 2]) / 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 3]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 3]) / 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 4]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 4]) / 65536)
-            + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 5]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 5]) / 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 6]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 6]) / 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 7]) % 65536)
-            + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 7]) / 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 8]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 8]) / 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 9]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 9]) / 65536)
-            + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 10]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 10]) / 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 11]) % 65536) + ((keysXored ^ dataTotal[(entry * DATA_SIZE) + 11]) / 65536)) % 65536;
-
-        if (originalChecksum == newChecksum) {
-            bool ace = (((keysXored ^ dataTotal[(entry * DATA_SIZE) + 0]) % 65536) == 39710);
-            outputTotal[(entry * OUTPUT_SIZE) + 0] = 1;                                               // long long match;
-            outputTotal[(entry * OUTPUT_SIZE) + 1] = ace;                                             // long long ace;
-            outputTotal[(entry * OUTPUT_SIZE) + 2] = keysXored ^ dataTotal[(entry * DATA_SIZE) + 0];  // long long keyXorData0;
-            outputTotal[(entry * OUTPUT_SIZE) + 3] = keysXored ^ dataTotal[(entry * DATA_SIZE) + 3];  // long long keyXorData3;
-            outputTotal[(entry * OUTPUT_SIZE) + 4] = keysXored ^ dataTotal[(entry * DATA_SIZE) + 4];  // long long keyXorData4;
-            outputTotal[(entry * OUTPUT_SIZE) + 5] = keysXored ^ dataTotal[(entry * DATA_SIZE) + 10]; // long long keyXorData10;
-            outputTotal[(entry * OUTPUT_SIZE) + 6] = dataTotal[(entry * DATA_SIZE) + 14];             // long long tid;
-            outputTotal[(entry * OUTPUT_SIZE) + 7] = dataTotal[(entry * DATA_SIZE) + 15];             // long long frame;
-            outputTotal[(entry * OUTPUT_SIZE) + 8] = dataTotal[(entry * DATA_SIZE) + 16];             // long long pokeballIndex;
-            outputTotal[(entry * OUTPUT_SIZE) + 9] = dataTotal[(entry * DATA_SIZE) + 17];             // long long enemyListIndex;
-        } else {
-            outputTotal[(entry * OUTPUT_SIZE) + 0] = 0;  // long long match;
-            outputTotal[(entry * OUTPUT_SIZE) + 1] = 0;  // long long ace;
-            outputTotal[(entry * OUTPUT_SIZE) + 2] = 0;  // long long keyXorData0;
-            outputTotal[(entry * OUTPUT_SIZE) + 3] = 0;  // long long keyXorData3;
-            outputTotal[(entry * OUTPUT_SIZE) + 4] = 0;  // long long keyXorData4;
-            outputTotal[(entry * OUTPUT_SIZE) + 5] = 0;  // long long keyXorData10;
-            outputTotal[(entry * OUTPUT_SIZE) + 6] = 0;  // long long tid;
-            outputTotal[(entry * OUTPUT_SIZE) + 7] = 0;  // long long frame;
-            outputTotal[(entry * OUTPUT_SIZE) + 8] = 0;  // long long pokeballIndex;
-            outputTotal[(entry * OUTPUT_SIZE) + 9] = 0;  // long long enemyListIndex;
-        }
-    }
 }
 
 /* ******************************************************
@@ -490,4 +490,15 @@ string padStringNumber(string number) {
         }
     }
     return outNumber;
+}
+
+template< typename T >
+string intToHex(T i, int len)
+{
+    stringstream stream;
+    stream << "0x" 
+        << std::setfill ('0') << std::setw(sizeof(T)*2) 
+        << std::hex << i;
+  
+    return stream.str().substr(0, len);
 }
