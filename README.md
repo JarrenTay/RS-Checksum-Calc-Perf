@@ -41,8 +41,10 @@ In a command prompt, navigate to the directory containing RSChecksumCalculator.e
 
 `.\RSChecksumCalculator.exe <first TID to calculate> <last TID to calculate> <number of frames to calculate>`
 
-example that calculates 4000 frames for TID 3575 and 3576: `.\RSChecksumCalculator.exe 3575 3576 4000`
+Example that calculates 4000 frames for TID 3575 and 3576: 
 
-Your results should appear in a csv file named cppMatches.csv and cppAces.csv
+`.\RSChecksumCalculator.exe 3575 3576 4000`
+
+Your results should appear in a csv file named cppMatches.csv and cppAces.csv. Subsequent runs will overwrite an existing file, so be careful to save your results.
 
 # [If you want to edit using Visual Studio](https://code.visualstudio.com/docs/languages/cpp)
