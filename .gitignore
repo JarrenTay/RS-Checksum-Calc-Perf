@@ -1,0 +1,5 @@
+*.exe
+aceMatches.csv
+checksumMatches.csv
+cppAces.csv
+cppMatches.csv
