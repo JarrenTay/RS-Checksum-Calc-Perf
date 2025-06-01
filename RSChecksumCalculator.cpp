@@ -227,17 +227,17 @@ vector<vector<int>> otidFileToVector(string fileName) {
 */
 void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, string dataOrder[], vector<string> &enemyList, map<string, vector<long long>> enemyDict, vector<vector<int>> otidVector) {
 
+    // Delete output files if they exist and create a new one.
     try {
         filesystem::remove(MATCH_FILE);
         filesystem::remove(ACE_FILE);   
     } catch (int errorCode) { }
-    
     ofstream matchFile(MATCH_FILE);
     ofstream aceFile(ACE_FILE);
     matchFile << CSV_HEADER << endl;
     aceFile << CSV_HEADER << endl;
 
-    // Note, python version doesn't allow 1 and does subtraction to account for header column
+    // Trainer ID is inclusive. We don't do subtraction in TID like in python bc we don't need to account for header row.
     for (int tid = trainerIdStart; tid <= trainerIdEnd; tid++) {
         cout << "Checking tid " << tid << endl;
 
@@ -245,7 +245,7 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
         long long playerLongLong = stoll(playerHex, 0, 16);
         long long playerKey = PID ^ playerLongLong;
 
-        // Start at frame 0 because python version starts at 1 bc of header column
+        // Start at frame 0. Python version starts at 1 bc of header column
         for (int frame = 0; frame < frames; frame++) {
             if (frame % 500 == 0) {
                 cout << "Checking frame " << frame << endl;
@@ -256,10 +256,9 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
             long long enemyKey = PID ^ enemyLongLong;
             long long data[12] = {};
 
-            //for (auto const& [key, val] : enemyDict) {
+            // Loop through all mons
             for (int enemyListIndex = 0; enemyListIndex < enemyList.size(); enemyListIndex++) {
                 string enemyMon = enemyList[enemyListIndex];
-                //vector<long long> enemyMonData = val;
                 vector<long long> enemyMonData = enemyDict[enemyMon];
                 string dataOrderString = dataOrder[enemyMonData[0] % 24];
 
@@ -284,6 +283,7 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
                     data[(dataOrderCharIndex * 3) + 2] = enemyMonData[enemyMonIndex + 2];
                 }
 
+                // Loop through pokeballs. We quit as soon as we find a match, even though there are likely more of the same pokeball.
                 for (int pokeballIndex = 1; pokeballIndex < 13; pokeballIndex++) {
                     data[9] = stoll(padStringNumber(format("{:34b}", data[9]).substr(2, 1) + format("{:6b}", pokeballIndex).substr(2) + format("{:34b}", data[9]).substr(7)), 0, 2);
 
