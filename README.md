@@ -1,6 +1,6 @@
-To Compile C++ on Windows:
+# To Compile C++ on Windows:
 
-Install MinGW-w64 toolchain: Copied from this link (https://code.visualstudio.com/docs/cpp/config-mingw#_prerequisites)
+## Install MinGW-w64 toolchain: Copied from this link which has pictures (https://code.visualstudio.com/docs/cpp/config-mingw#_prerequisites)
 
 1. You can download the latest installer from the MSYS2 page or use this direct link to the [installer](https://github.com/msys2/msys2-installer/releases/download/2024-12-08/msys2-x86_64-20241208.exe).
 
@@ -9,33 +9,39 @@ Install MinGW-w64 toolchain: Copied from this link (https://code.visualstudio.co
 3. In the wizard, choose your desired Installation Folder. Record this directory for later. In most cases, the recommended directory is acceptable. The same applies when you get to setting the start menu shortcuts step. When complete, ensure the Run MSYS2 now box is checked and select Finish. This will open a MSYS2 terminal window for you.
 
 4. In this terminal, install the MinGW-w64 toolchain by running the following command:
-    pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain
 
-5. Accept the default number of packages in the toolchain group by pressing Enter.
+   `pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain`
 
-6. Enter Y when prompted whether to proceed with the installation.
+6. Accept the default number of packages in the toolchain group by pressing Enter.
 
-7. Add the path of your MinGW-w64 bin folder to the Windows PATH environment variable by using the following steps:
-    a. In the Windows search bar, type Settings to open your Windows Settings.
-    b. Search for Edit environment variables for your account.
-    c. In your User variables, select the Path variable and then select Edit.
-    d. Select New and add the MinGW-w64 destination folder you recorded during the installation process to the list. If you used the default settings above, then this will be the path: C:\msys64\ucrt64\bin.
-    e. Select OK, and then select OK again in the Environment Variables window to update the PATH environment variable. You have to reopen any console windows for the updated PATH environment variable to be available.
+7. Enter `Y` when prompted whether to proceed with the installation.
 
-Check your MinGW installation
+8. Add the path of your MinGW-w64 bin folder to the Windows PATH environment variable by using the following steps:
+    1. In the Windows search bar, type Settings to open your Windows Settings.
+    2. Search for Edit environment variables for your account.
+    3. In your User variables, select the Path variable and then select Edit.
+    4. Select New and add the MinGW-w64 destination folder you recorded during the installation process to the list. If you used the default settings above, then this will be the path: `C:\msys64\ucrt64\bin`.
+    5. Select OK, and then select OK again in the Environment Variables window to update the PATH environment variable. You have to reopen any console windows for the updated PATH environment variable to be available.
+
+## Check your MinGW installation
 
 1. To check that your MinGW-w64 tools are correctly installed and available, open a NEW Command Prompt and type:
-    g++ --version
 
-Compile:
+   `g++ --version`
+
+## Compile:
 
 1. Use a command prompt and navigate to the directory containing RSChecksumCalculator.cpp
-2. Execute: g++ -std=c++20 -O3 -o RSChecksumCalculator RSChecksumCalculator.cpp
+2. Execute:
 
-Run:
+   `g++ -std=c++20 -O3 -o RSChecksumCalculator RSChecksumCalculator.cpp`
+
+## Run:
 Note: currently it is hard coded to search on TID 3575 and frames 0-3999. Edit the calculateChecksumMatches() function call in main() to change these parameters.
-In a command prompt, navigate to the directory containing RSChecksumCalculator.exe and call .\RSChecksumCalculator.exe
+In a command prompt, navigate to the directory containing RSChecksumCalculator.exe and call 
+
+`.\RSChecksumCalculator.exe`
+
 Your results should appear in a csv file named cppMatches.csv and cppAces.csv
 
-If you want to edit using Visual Studio:
-    https://code.visualstudio.com/docs/languages/cpp
+# [If you want to edit using Visual Studio](https://code.visualstudio.com/docs/languages/cpp)
