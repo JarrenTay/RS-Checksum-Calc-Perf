@@ -16,5 +16,8 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
 struct ChecksumMatchResults;
 ChecksumMatchResults calculateMatch(long long data[], long long playerKey, long long enemyKey);
 string padStringNumber(string number);
+template< typename T >
+string intToHex(T i, int len);
+string llToBin(long long longlong, int len);
 
 #endif
