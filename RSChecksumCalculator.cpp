@@ -4,9 +4,11 @@
 #include <vector>
 #include <map>
 #include <cstdint>
-#include <format>
+#include <bitset>
 #include <filesystem>
 #include <chrono>
+#include <iomanip>
+#include <sstream>
 #include "RSChecksumCalculator.h"
 
 using namespace std;
@@ -243,8 +245,7 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
     // Trainer ID is inclusive. We don't do subtraction in TID like in python bc we don't need to account for header row.
     for (int tid = trainerIdStart; tid <= trainerIdEnd; tid++) {
         cout << "Checking tid " << tid << endl;
-
-        string playerHex = padStringNumber(format("0x{:4x}", otidVector[tid][2]) + format("{:4x}", otidVector[tid][1]));
+        string playerHex = intToHex(otidVector[tid][2], 4) + intToHex(otidVector[tid][1], 4).substr(2);
         long long playerLongLong = stoll(playerHex, 0, 16);
         long long playerKey = PID ^ playerLongLong;
         long long entryCount = frames * enemyList.size() * POKEBALL_COUNT;
@@ -264,7 +265,7 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
                 cout << "Checking frame " << frame << endl;
             }
 
-            string enemyHex = padStringNumber(format("0x{:4x}", otidVector[frame][1]) + format("{:4x}", otidVector[frame][2]));
+            string enemyHex = intToHex(otidVector[frame][1], 4) + intToHex(otidVector[frame][2], 4).substr(2);
             long long enemyLongLong = stoll(enemyHex, 0, 16);
             long long enemyKey = PID ^ enemyLongLong;
 
@@ -304,11 +305,42 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
 
                 // Loop through pokeballs. We quit as soon as we find a match, even though there are likely more of the same pokeball.
                 for (int pokeballIndex = 1; pokeballIndex < 13; pokeballIndex++) {
+<<<<<<< HEAD
                     data[9] = stoll(padStringNumber(format("{:34b}", data[9]).substr(2, 1) + format("{:6b}", pokeballIndex).substr(2) + format("{:34b}", data[9]).substr(7)), 0, 2);
                     data[16] = pokeballIndex;
 
                     for (int dataIndex = 0; dataIndex < DATA_SIZE; data++) {
                         dataTotal[(frame * enemyListIndex * (pokeballIndex - 1)) + dataIndex] = data[dataIndex];
+=======
+					//cout << llToBin(data[9], 32).substr(2, 1) << " " << llToBin(pokeballIndex, 4).substr(2) << " " << llToBin(data[9], 32).substr(7) << endl;
+                    data[9] = stoll(llToBin(data[9], 32).substr(2, 1) + llToBin(pokeballIndex, 4).substr(2) + llToBin(data[9], 32).substr(7), 0, 2);
+
+                    ChecksumMatchResults matchResults = calculateMatch(data, playerKey, enemyKey);
+                    if (matchResults.match) {
+                        string matchOut = 
+                            to_string(tid) + "," +
+                            to_string(frame) + "," +
+                            to_string(otidVector[tid][1]) + " " +
+                            to_string(otidVector[tid][2]) + "," +
+                            to_string(otidVector[frame][2]) + " " +
+                            to_string(otidVector[frame][1]) + "," +
+                            "0x" + intToHex(matchResults.keyXorData0, 8).substr(6) + "," +
+                            intToHex(matchResults.keyXorData0, 8).substr(0, 6) + "," +
+                            "0x" + intToHex(matchResults.keyXorData3, 8).substr(6) + " " +
+                            intToHex(matchResults.keyXorData3, 8).substr(0, 6) + " " +
+                            "0x" + intToHex(matchResults.keyXorData4, 8).substr(6) + " " +
+                            intToHex(matchResults.keyXorData4, 8).substr(0, 6) + "," +
+                            to_string(pokeballIndex) + "," +
+                            llToBin(matchResults.keyXorData10, 32).substr(3, 1) + "," +
+                            enemyMon;
+
+                        matchFile << matchOut << endl;
+
+                        if (matchResults.ace) {
+                            aceFile << matchOut << endl;
+                        }
+                        break;
+>>>>>>> main
                     }
                 }
             }
@@ -490,4 +522,20 @@ string padStringNumber(string number) {
         }
     }
     return outNumber;
+}
+
+template< typename T >
+string intToHex(T i, int len)
+{
+    stringstream stream;
+    stream << std::setfill('0') << std::setw(sizeof(T) * 2)
+        << std::hex << i;
+  
+    string hex = stream.str();
+    return "0x" + hex.substr(hex.length() - len);
+}
+
+string llToBin(long long longlong, int len)
+{
+    return "0b" + bitset<32>(longlong).to_string().substr(32 - len);
 }

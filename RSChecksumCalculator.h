@@ -19,5 +19,9 @@ ChecksumMatchResults calculateMatch(long long data[], long long playerKey, long 
 string padStringNumber(string number);
 template< typename T >
 string intToHex(T i, int len);
+<<<<<<< HEAD
+=======
+string llToBin(long long longlong, int len);
+>>>>>>> main
 
 #endif

@@ -4,3 +4,7 @@ checksumMatches.csv
 cppAces.csv
 cppMatches.csv
 .vscode/
+.vs/
+Project1*
+Project1/
+x64/
