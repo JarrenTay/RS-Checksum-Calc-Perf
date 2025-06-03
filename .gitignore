@@ -3,8 +3,12 @@ aceMatches.csv
 checksumMatches.csv
 cppAces.csv
 cppMatches.csv
+gpuAces.csv
+gpuMatches.csv
 .vscode/
 .vs/
 Project1*
 Project1/
 x64/
+CudaRuntime1*
+CudaRuntime/

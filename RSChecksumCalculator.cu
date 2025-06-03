@@ -7,6 +7,8 @@
 #include <bitset>
 #include <filesystem>
 #include <chrono>
+#include <iomanip>
+#include <sstream>
 #include "RSChecksumCalculator.h"
 
 using namespace std;
@@ -18,8 +20,8 @@ const int DATA_ORDER_A = 4;
 const int DATA_ORDER_E = 7;
 const int DATA_ORDER_M = 10;
 const string CSV_HEADER = "Player frame,Enemy Frame,Player TID/SID,Enemy TID/SID,Species,Held Item,Moves,Pokeball,Egg,Enemy Mon";
-const string MATCH_FILE = "cppMatches.csv";
-const string ACE_FILE = "cppAces.csv";
+const string MATCH_FILE = "gpuMatches.csv";
+const string ACE_FILE = "gpuAces.csv";
 const int DATA_SIZE = 18;
 const int POKEBALL_COUNT = 12;
 const int OUTPUT_SIZE = 10;
@@ -331,7 +333,6 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
             data[14] = tid;
             data[15] = frame;
 
-
             // Loop through all mons
             for (int enemyListIndex = 0; enemyListIndex < enemyList.size(); enemyListIndex++) {
                 string enemyMon = enemyList[enemyListIndex];
@@ -363,7 +364,7 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
 
                 // Loop through pokeballs. We quit as soon as we find a match, even though there are likely more of the same pokeball.
                 for (int pokeballIndex = 1; pokeballIndex < 13; pokeballIndex++) {
-                    data[9] = stoll(padStringNumber(bitset<8>(data[9]).to_string().substr(0, 1) + bitset<8>(pokeballIndex).to_string().substr(28, 1) + bitset<8>(data[9]).to_string().substr(5)), 0, 2);
+                    data[9] = stoll(llToBin(data[9], 32).substr(2, 1) + llToBin(pokeballIndex, 4).substr(2) + llToBin(data[9], 32).substr(7), 0, 2);
                     data[16] = pokeballIndex;
 
                     for (int dataIndex = 0; dataIndex < DATA_SIZE; data++) {
@@ -384,26 +385,26 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
 
         for (long long entry = 0; entry < entryCount; entry++) {
             if (outputTotal[(entry * OUTPUT_SIZE) + 0]) {
-                string matchOut = 
+                string matchOut =
                     to_string(tid) + "," +
                     to_string(outputTotal[(entry * OUTPUT_SIZE) + 7]) + "," +
-                    to_string(otidVector[tid][1]) + "," +
+                    to_string(otidVector[tid][1]) + " " +
                     to_string(otidVector[tid][2]) + "," +
-                    to_string(otidVector[outputTotal[(entry * OUTPUT_SIZE) + 7]][2]) + "," +
+                    to_string(otidVector[outputTotal[(entry * OUTPUT_SIZE) + 7]][2]) + " " +
                     to_string(otidVector[outputTotal[(entry * OUTPUT_SIZE) + 7]][1]) + "," +
-                    padStringNumber(intToHex(outputTotal[(entry * OUTPUT_SIZE) + 2], 8).substr(4, 4)) + "," +
-                    padStringNumber(intToHex(outputTotal[(entry * OUTPUT_SIZE) + 2], 8).substr(0, 6)) + "," +
-                    padStringNumber(intToHex(outputTotal[(entry * OUTPUT_SIZE) + 3], 8).substr(6)) + "," +
-                    padStringNumber(intToHex(outputTotal[(entry * OUTPUT_SIZE) + 3], 8).substr(0, 6)) + "," +
-                    padStringNumber(intToHex(outputTotal[(entry * OUTPUT_SIZE) + 4], 8).substr(6)) + "," +
-                    padStringNumber(intToHex(outputTotal[(entry * OUTPUT_SIZE) + 4], 8).substr(0, 6)) + "," +
+                    "0x" + intToHex(outputTotal[(entry * OUTPUT_SIZE) + 2], 8).substr(6) + "," +
+                    intToHex(outputTotal[(entry * OUTPUT_SIZE) + 2], 8).substr(0, 6) + "," +
+                    "0x" + intToHex(outputTotal[(entry * OUTPUT_SIZE) + 3], 8).substr(6) + " " +
+                    intToHex(outputTotal[(entry * OUTPUT_SIZE) + 3], 8).substr(0, 6) + " " +
+                    "0x" + intToHex(outputTotal[(entry * OUTPUT_SIZE) + 4], 8).substr(6) + " " +
+                    intToHex(outputTotal[(entry * OUTPUT_SIZE) + 4], 8).substr(0, 6) + "," +
                     to_string(outputTotal[(entry * OUTPUT_SIZE) + 8]) + "," +
-                    padStringNumber(bitset<8>(outputTotal[(entry * OUTPUT_SIZE) + 5]).to_string().substr(1, 1)) + "," +
+                    llToBin(outputTotal[(entry * OUTPUT_SIZE) + 5], 32).substr(3, 1) + "," +
                     enemyList[outputTotal[(entry * OUTPUT_SIZE) + 9]];
-                matchFile << matchOut;
+                matchFile << matchOut << endl;
 
                 if (outputTotal[(entry * OUTPUT_SIZE) + 1]) {
-                    aceFile << matchOut;
+                    aceFile << matchOut << endl;
                 }
             }
         }
@@ -490,9 +491,14 @@ template< typename T >
 string intToHex(T i, int len)
 {
     stringstream stream;
-    stream << "0x" 
-        << std::setfill ('0') << std::setw(sizeof(T)*2) 
+    stream << std::setfill('0') << std::setw(sizeof(T) * 2)
         << std::hex << i;
-  
-    return stream.str().substr(0, len);
+
+    string hex = stream.str();
+    return "0x" + hex.substr(hex.length() - len);
+}
+
+string llToBin(long long longlong, int len)
+{
+    return "0b" + bitset<32>(longlong).to_string().substr(32 - len);
 }
