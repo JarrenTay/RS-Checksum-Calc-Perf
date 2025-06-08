@@ -25,6 +25,8 @@ const string ACE_FILE = "gpuAces.csv";
 const int DATA_SIZE = 18;
 const int POKEBALL_COUNT = 12;
 const int OUTPUT_SIZE = 10;
+//entry count 12144 data count 218592 output count 121440
+//enemyListSize = 506
 
 struct ChecksumMatchResults {
     bool match;
@@ -74,17 +76,18 @@ void calculateMatchCuda(long long entries, long long *dataTotal, long long *outp
             outputTotal[(entry * OUTPUT_SIZE) + 7] = dataTotal[(entry * DATA_SIZE) + 15];             // long long frame;
             outputTotal[(entry * OUTPUT_SIZE) + 8] = dataTotal[(entry * DATA_SIZE) + 16];             // long long pokeballIndex;
             outputTotal[(entry * OUTPUT_SIZE) + 9] = dataTotal[(entry * DATA_SIZE) + 17];             // long long enemyListIndex;
+
         } else {
             outputTotal[(entry * OUTPUT_SIZE) + 0] = 0;  // long long match;
             outputTotal[(entry * OUTPUT_SIZE) + 1] = 0;  // long long ace;
-            outputTotal[(entry * OUTPUT_SIZE) + 2] = 0;  // long long keyXorData0;
-            outputTotal[(entry * OUTPUT_SIZE) + 3] = 0;  // long long keyXorData3;
-            outputTotal[(entry * OUTPUT_SIZE) + 4] = 0;  // long long keyXorData4;
-            outputTotal[(entry * OUTPUT_SIZE) + 5] = 0;  // long long keyXorData10;
-            outputTotal[(entry * OUTPUT_SIZE) + 6] = 0;  // long long tid;
-            outputTotal[(entry * OUTPUT_SIZE) + 7] = 0;  // long long frame;
-            outputTotal[(entry * OUTPUT_SIZE) + 8] = 0;  // long long pokeballIndex;
-            outputTotal[(entry * OUTPUT_SIZE) + 9] = 0;  // long long enemyListIndex;
+            outputTotal[(entry * OUTPUT_SIZE) + 2] = 2;  // long long keyXorData0;
+            outputTotal[(entry * OUTPUT_SIZE) + 3] = 3;  // long long keyXorData3;
+            outputTotal[(entry * OUTPUT_SIZE) + 4] = 4;  // long long keyXorData4;
+            outputTotal[(entry * OUTPUT_SIZE) + 5] = 5;  // long long keyXorData10;
+            outputTotal[(entry * OUTPUT_SIZE) + 6] = 6;  // long long tid;
+            outputTotal[(entry * OUTPUT_SIZE) + 7] = 7;  // long long frame;
+            outputTotal[(entry * OUTPUT_SIZE) + 8] = 8;  // long long pokeballIndex;
+            outputTotal[(entry * OUTPUT_SIZE) + 9] = 9;  // long long enemyListIndex;
         }
     }
 }
@@ -110,11 +113,8 @@ int main(int argc, char* argv[]) {
     // Calculate Checksums
     cout << "Executing with TIDs " << arguments[0] << " to " << arguments[1] << " (inclusive) and the first " << arguments[2] << " frames." << endl;
     cout << "USING CUDA" << endl;
-    printf("test\n");
     calculateChecksumMatches(arguments[0], arguments[1], arguments[2], dataOrder, enemyList, enemyDict, otidVector);
-    printf("testB\n");
-    cout << "WHY" << endl;
-    fflush(stdout);
+
     // Check Time Elapsed
     steady_clock::time_point end = steady_clock::now();
     cout << "Time elapsed: " << (duration_cast<microseconds> (end - start).count()) / 1000000 << " seconds" << std::endl;
@@ -304,10 +304,11 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
     for (int tid = trainerIdStart; tid <= trainerIdEnd; tid++) {
         cout << "Checking tid " << tid << endl;
 
-        string playerHex = padStringNumber(intToHex(otidVector[tid][2], 6) + intToHex(otidVector[tid][1], 6).substr(2));
+        string playerHex = intToHex(otidVector[tid][2], 4) + intToHex(otidVector[tid][1], 4).substr(2);
         long long playerLongLong = stoll(playerHex, 0, 16);
         long long playerKey = PID ^ playerLongLong;
-        long long entryCount = frames * enemyList.size() * POKEBALL_COUNT;
+        long long enemyListSize = enemyList.size();
+        long long entryCount = frames * enemyListSize * POKEBALL_COUNT;
         long long dataCount = entryCount * DATA_SIZE;
         long long outputCount = entryCount * OUTPUT_SIZE;
         //long long *dataTotal = new long long[dataCount];
@@ -315,16 +316,17 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
         long long *dataTotal, *outputTotal;
         cudaMallocManaged(&dataTotal, dataCount * sizeof(long long));
         cudaMallocManaged(&outputTotal, outputCount * sizeof(long long));
+		cout << "entry count " << entryCount << " data count " << dataCount << " output count " << outputCount << endl;
         
         long long *data = new long long[DATA_SIZE];
 
         // Start at frame 0. Python version starts at 1 bc of header column
         for (int frame = 0; frame < frames; frame++) {
-            if (frame % 500 == 0) {
+            if (frame % 1 == 0) {
                 cout << "Checking frame " << frame << endl;
             }
 
-            string enemyHex = padStringNumber(intToHex(otidVector[frame][1], 6) + intToHex(otidVector[frame][2], 6).substr(2));
+            string enemyHex = intToHex(otidVector[frame][1], 4) + intToHex(otidVector[frame][2], 4).substr(2);
             long long enemyLongLong = stoll(enemyHex, 0, 16);
             long long enemyKey = PID ^ enemyLongLong;
 
@@ -334,7 +336,7 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
             data[15] = frame;
 
             // Loop through all mons
-            for (int enemyListIndex = 0; enemyListIndex < enemyList.size(); enemyListIndex++) {
+            for (int enemyListIndex = 0; enemyListIndex < enemyListSize; enemyListIndex++) {
                 string enemyMon = enemyList[enemyListIndex];
                 vector<long long> enemyMonData = enemyDict[enemyMon];
                 string dataOrderString = dataOrder[enemyMonData[0] % 24];
@@ -367,23 +369,51 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
                     data[9] = stoll(llToBin(data[9], 32).substr(2, 1) + llToBin(pokeballIndex, 4).substr(2) + llToBin(data[9], 32).substr(7), 0, 2);
                     data[16] = pokeballIndex;
 
-                    for (int dataIndex = 0; dataIndex < DATA_SIZE; data++) {
-                        dataTotal[(frame * enemyListIndex * (pokeballIndex - 1)) + dataIndex] = data[dataIndex];
+                    for (int dataIndex = 0; dataIndex < DATA_SIZE; dataIndex++) {
+                        //cout << "Adding to " << (frame * enemyListSize * POKEBALL_COUNT * DATA_SIZE) + (enemyListIndex * POKEBALL_COUNT * DATA_SIZE) + ((pokeballIndex - 1) * DATA_SIZE) + dataIndex << endl;
+                        dataTotal[(frame * enemyListSize * POKEBALL_COUNT * DATA_SIZE) + (enemyListIndex * POKEBALL_COUNT * DATA_SIZE) + ((pokeballIndex - 1) * DATA_SIZE) + dataIndex] = data[dataIndex];
                     }
-                }
 
-                for (int i = 0; i < DATA_SIZE; i++) {
-                    cout << data[i] << " ";
+                    /*
+                    // [data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], playerKey, enemyKey, tid, frame, pokeballIndex, enemyListIndex]
+                    for (int i = 0; i < DATA_SIZE; i++) {
+                        cout << data[i] << " ";
+                    }
+                    cout << endl;*/
                 }
-                cout << endl;
             }
         }
+        /*
+        for (long long entry = 0; entry < entryCount; entry++) {
+            cout << "data entry: " << entry << " ";
+            //const string CSV_HEADER = "Player frame,Enemy Frame,Player TID/SID,Enemy TID/SID,Species,Held Item,Moves,Pokeball,Egg,Enemy Mon";
+            cout << dataTotal[(entry * DATA_SIZE) + 0] << " " << dataTotal[(entry * DATA_SIZE) + 1] << " "
+                << dataTotal[(entry * DATA_SIZE) + 2] << " " << dataTotal[(entry * DATA_SIZE) + 3] << " "
+                << dataTotal[(entry * DATA_SIZE) + 4] << " " << dataTotal[(entry * DATA_SIZE) + 5] << " "
+                << dataTotal[(entry * DATA_SIZE) + 6] << " " << dataTotal[(entry * DATA_SIZE) + 7] << " "
+                << dataTotal[(entry * DATA_SIZE) + 8] << " " << dataTotal[(entry * DATA_SIZE) + 9] << " "
+                << dataTotal[(entry * DATA_SIZE) + 10] << " " << dataTotal[(entry * DATA_SIZE) + 11] << " "
+                << dataTotal[(entry * DATA_SIZE) + 12] << " " << dataTotal[(entry * DATA_SIZE) + 13] << " "
+                << dataTotal[(entry * DATA_SIZE) + 14] << " " << dataTotal[(entry * DATA_SIZE) + 15] << " "
+                << dataTotal[(entry * DATA_SIZE) + 16] << " " << dataTotal[(entry * DATA_SIZE) + 17] << " " << endl;
+        }*/
 
         calculateMatchCuda<<<1, 1>>>(entryCount, dataTotal, outputTotal);
+        //calculateMatchCuda(entryCount, dataTotal, outputTotal);
 
         cudaDeviceSynchronize();
-
+        cout << "finished calcing checksums" << endl;
+		cout << "entryCount: " << entryCount << endl;
         for (long long entry = 0; entry < entryCount; entry++) {
+            /*cout << "entry: " << entry;
+            //const string CSV_HEADER = "Player frame,Enemy Frame,Player TID/SID,Enemy TID/SID,Species,Held Item,Moves,Pokeball,Egg,Enemy Mon";
+			cout << outputTotal[(entry * OUTPUT_SIZE) + 0] << " " << outputTotal[(entry * OUTPUT_SIZE) + 1] << " "
+				<< outputTotal[(entry * OUTPUT_SIZE) + 2] << " " << outputTotal[(entry * OUTPUT_SIZE) + 3] << " "
+				<< outputTotal[(entry * OUTPUT_SIZE) + 4] << " " << outputTotal[(entry * OUTPUT_SIZE) + 5] << " "
+				<< outputTotal[(entry * OUTPUT_SIZE) + 6] << " " << outputTotal[(entry * OUTPUT_SIZE) + 7] << " "
+				<< outputTotal[(entry * OUTPUT_SIZE) + 8] << " " << outputTotal[(entry * OUTPUT_SIZE) + 9] << endl;
+            */
+            
             if (outputTotal[(entry * OUTPUT_SIZE) + 0]) {
                 string matchOut =
                     to_string(tid) + "," +
@@ -407,6 +437,7 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
                     aceFile << matchOut << endl;
                 }
             }
+                
         }
 
         cudaFree(dataTotal);

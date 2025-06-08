@@ -14,7 +14,8 @@ long long hexStringToIntLittleEndian(string hexString);
 vector<vector<int>> otidFileToVector(string fileName);
 void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, string dataOrder[], vector<string> &enemyList, map<string, vector<long long>> enemyDict, vector<vector<int>> otidVector);
 struct ChecksumMatchResults;
-__global__ void calculateMatchCuda(long long entries, long long *dataTotal, long long *outputTotal);
+__global__ 
+void calculateMatchCuda(long long entries, long long *dataTotal, long long *outputTotal);
 ChecksumMatchResults calculateMatch(long long data[], long long playerKey, long long enemyKey);
 string padStringNumber(string number);
 template< typename T >
