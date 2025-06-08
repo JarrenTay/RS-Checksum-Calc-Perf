@@ -367,6 +367,7 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
 
                 // Loop through pokeballs. We quit as soon as we find a match, even though there are likely more of the same pokeball.
                 for (int pokeballIndex = 1; pokeballIndex < 13; pokeballIndex++) {
+                    // This line is costing ~30% of our performance
                     data[9] = stoll(llToBin(data[9], 32).substr(2, 1) + llToBin(pokeballIndex, 4).substr(2) + llToBin(data[9], 32).substr(7), 0, 2);
                     data[16] = pokeballIndex;
 
@@ -384,36 +385,13 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
                 }
             }
         }
-        /*
-        for (long long entry = 0; entry < entryCount; entry++) {
-            cout << "data entry: " << entry << " ";
-            //const string CSV_HEADER = "Player frame,Enemy Frame,Player TID/SID,Enemy TID/SID,Species,Held Item,Moves,Pokeball,Egg,Enemy Mon";
-            cout << dataTotal[(entry * DATA_SIZE) + 0] << " " << dataTotal[(entry * DATA_SIZE) + 1] << " "
-                << dataTotal[(entry * DATA_SIZE) + 2] << " " << dataTotal[(entry * DATA_SIZE) + 3] << " "
-                << dataTotal[(entry * DATA_SIZE) + 4] << " " << dataTotal[(entry * DATA_SIZE) + 5] << " "
-                << dataTotal[(entry * DATA_SIZE) + 6] << " " << dataTotal[(entry * DATA_SIZE) + 7] << " "
-                << dataTotal[(entry * DATA_SIZE) + 8] << " " << dataTotal[(entry * DATA_SIZE) + 9] << " "
-                << dataTotal[(entry * DATA_SIZE) + 10] << " " << dataTotal[(entry * DATA_SIZE) + 11] << " "
-                << dataTotal[(entry * DATA_SIZE) + 12] << " " << dataTotal[(entry * DATA_SIZE) + 13] << " "
-                << dataTotal[(entry * DATA_SIZE) + 14] << " " << dataTotal[(entry * DATA_SIZE) + 15] << " "
-                << dataTotal[(entry * DATA_SIZE) + 16] << " " << dataTotal[(entry * DATA_SIZE) + 17] << " " << endl;
-        }*/
 
         calculateMatchCuda<<<1, 256>>>(entryCount, dataTotal, outputTotal);
-        //calculateMatchCuda(entryCount, dataTotal, outputTotal);
 
         cudaDeviceSynchronize();
         cout << "finished calcing checksums" << endl;
 		cout << "entryCount: " << entryCount << endl;
         for (long long entry = 0; entry < entryCount; entry++) {
-            /*cout << "entry: " << entry;
-            //const string CSV_HEADER = "Player frame,Enemy Frame,Player TID/SID,Enemy TID/SID,Species,Held Item,Moves,Pokeball,Egg,Enemy Mon";
-			cout << outputTotal[(entry * OUTPUT_SIZE) + 0] << " " << outputTotal[(entry * OUTPUT_SIZE) + 1] << " "
-				<< outputTotal[(entry * OUTPUT_SIZE) + 2] << " " << outputTotal[(entry * OUTPUT_SIZE) + 3] << " "
-				<< outputTotal[(entry * OUTPUT_SIZE) + 4] << " " << outputTotal[(entry * OUTPUT_SIZE) + 5] << " "
-				<< outputTotal[(entry * OUTPUT_SIZE) + 6] << " " << outputTotal[(entry * OUTPUT_SIZE) + 7] << " "
-				<< outputTotal[(entry * OUTPUT_SIZE) + 8] << " " << outputTotal[(entry * OUTPUT_SIZE) + 9] << endl;
-            */
             
             if (outputTotal[(entry * OUTPUT_SIZE) + 0]) {
                 string matchOut =
