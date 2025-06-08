@@ -49,7 +49,9 @@ struct ChecksumMatchResults {
 */
 __global__
 void calculateMatchCuda(long long entries, long long *dataTotal, long long *outputTotal) {
-    for (long long entry = 0; entry < entries; entry++) {
+    int index = threadIdx.x;
+    int stride = blockDim.x;
+    for (long long entry = index; entry < entries; entry += stride) {
         long long originalChecksum = ((dataTotal[(entry * DATA_SIZE) + 0] % 65536) + (dataTotal[(entry * DATA_SIZE) + 0] / 65536) + (dataTotal[(entry * DATA_SIZE) + 1] % 65536) + (dataTotal[(entry * DATA_SIZE) + 1] / 65536) + (dataTotal[(entry * DATA_SIZE) + 2] % 65536)
             + (dataTotal[(entry * DATA_SIZE) + 2] / 65536) + (dataTotal[(entry * DATA_SIZE) + 3] % 65536) + (dataTotal[(entry * DATA_SIZE) + 3] / 65536) + (dataTotal[(entry * DATA_SIZE) + 4] % 65536) + (dataTotal[(entry * DATA_SIZE) + 4] / 65536)
             + (dataTotal[(entry * DATA_SIZE) + 5] % 65536) + (dataTotal[(entry * DATA_SIZE) + 5] / 65536) + (dataTotal[(entry * DATA_SIZE) + 6] % 65536) + (dataTotal[(entry * DATA_SIZE) + 6] / 65536) + (dataTotal[(entry * DATA_SIZE) + 7] % 65536)
@@ -316,13 +318,12 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
         long long *dataTotal, *outputTotal;
         cudaMallocManaged(&dataTotal, dataCount * sizeof(long long));
         cudaMallocManaged(&outputTotal, outputCount * sizeof(long long));
-		cout << "entry count " << entryCount << " data count " << dataCount << " output count " << outputCount << endl;
         
         long long *data = new long long[DATA_SIZE];
 
         // Start at frame 0. Python version starts at 1 bc of header column
         for (int frame = 0; frame < frames; frame++) {
-            if (frame % 1 == 0) {
+            if (frame % 500 == 0) {
                 cout << "Checking frame " << frame << endl;
             }
 
@@ -398,7 +399,7 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
                 << dataTotal[(entry * DATA_SIZE) + 16] << " " << dataTotal[(entry * DATA_SIZE) + 17] << " " << endl;
         }*/
 
-        calculateMatchCuda<<<1, 1>>>(entryCount, dataTotal, outputTotal);
+        calculateMatchCuda<<<1, 256>>>(entryCount, dataTotal, outputTotal);
         //calculateMatchCuda(entryCount, dataTotal, outputTotal);
 
         cudaDeviceSynchronize();
