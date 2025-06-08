@@ -238,6 +238,8 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
     ofstream aceFile(ACE_FILE);
     matchFile << CSV_HEADER << endl;
     aceFile << CSV_HEADER << endl;
+    int enemyListSize = enemyList.size();
+    int dataOrderStringLength = 4;
 
     // Trainer ID is inclusive. We don't do subtraction in TID like in python bc we don't need to account for header row.
     for (int tid = trainerIdStart; tid <= trainerIdEnd; tid++) {
@@ -258,12 +260,12 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
             long long data[12] = {};
 
             // Loop through all mons
-            for (int enemyListIndex = 0; enemyListIndex < enemyList.size(); enemyListIndex++) {
+            for (int enemyListIndex = 0; enemyListIndex < enemyListSize; enemyListIndex++) {
                 string enemyMon = enemyList[enemyListIndex];
                 vector<long long> enemyMonData = enemyDict[enemyMon];
                 string dataOrderString = dataOrder[enemyMonData[0] % 24];
 
-                for (int dataOrderCharIndex = 0; dataOrderCharIndex < dataOrderString.length(); dataOrderCharIndex++) {
+                for (int dataOrderCharIndex = 0; dataOrderCharIndex < dataOrderStringLength; dataOrderCharIndex++) {
                     int enemyMonIndex = 0;
                     switch (dataOrderString[dataOrderCharIndex]) {
                         case 'G':
@@ -285,9 +287,11 @@ void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, 
                 }
 
                 // Loop through pokeballs. We quit as soon as we find a match, even though there are likely more of the same pokeball.
-                for (int pokeballIndex = 1; pokeballIndex < 13; pokeballIndex++) {
+                for (long long pokeballIndex = 1; pokeballIndex < 13; pokeballIndex++) {
 					//cout << llToBin(data[9], 32).substr(2, 1) << " " << llToBin(pokeballIndex, 4).substr(2) << " " << llToBin(data[9], 32).substr(7) << endl;
-                    data[9] = stoll(llToBin(data[9], 32).substr(2, 1) + llToBin(pokeballIndex, 4).substr(2) + llToBin(data[9], 32).substr(7), 0, 2);
+                    long long data9Piece1 = data[9] & 0b10000111111111111111111111111111; // llToBin(data[9], 32).substr(2, 1) Get first bit
+                    long long data9Piece2 = pokeballIndex << 27; // Shift bits over 27 to be next to Piece 1
+                    data[9] = data9Piece1 + data9Piece2;
 
                     ChecksumMatchResults matchResults = calculateMatch(data, playerKey, enemyKey);
                     if (matchResults.match) {
