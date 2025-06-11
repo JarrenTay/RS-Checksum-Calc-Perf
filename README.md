@@ -45,7 +45,7 @@ Example that calculates 4000 frames for TID 3575 and 3576 using 4 threads:
 
 `.\RSChecksumCalculator.exe 3575 3576 4000 4`
 
-Example that calculates 4000 frames for TID 1 to 10000 using maximum threads: 
+Example that calculates 4000 frames for TID 1 to 10000 using maximum threads (automatically defaults to num cores you have): 
 
 `.\RSChecksumCalculator.exe 1 10000 4000 1000`
 
