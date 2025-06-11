@@ -9,7 +9,10 @@
 #include <chrono>
 #include <iomanip>
 #include <sstream>
+#include <thread>
+#include <mutex>
 #include "RSChecksumCalculator.h"
+#include "ThreadPool.h"
 
 using namespace std;
 using namespace chrono;
@@ -20,8 +23,8 @@ const int DATA_ORDER_A = 4;
 const int DATA_ORDER_E = 7;
 const int DATA_ORDER_M = 10;
 const string CSV_HEADER = "Player frame,Enemy Frame,Player TID/SID,Enemy TID/SID,Species,Held Item,Moves,Pokeball,Egg,Enemy Mon";
-const string MATCH_FILE = "cppMatches.csv";
-const string ACE_FILE = "cppAces.csv";
+const string MATCH_FOLDER = "./cppMatches";
+const string ACE_FOLDER = "./cppAces";
 
 struct ChecksumMatchResults {
     bool match;
@@ -50,9 +53,32 @@ int main(int argc, char* argv[]) {
         "MGAE", "MGEA", "MAGE", "MAEG", "MEGA", "MEAG"
     };
 
+    // Create Directory
+	try {
+		filesystem::create_directory(MATCH_FOLDER);
+		filesystem::create_directory(ACE_FOLDER);
+	}
+	catch (int errorCode) {
+		cout << "Error creating output directories: " << errorCode << endl;
+		return 1;
+	}
+
     // Calculate Checksums
-    cout << "Executing with TIDs " << arguments[0] << " to " << arguments[1] << " (inclusive) and the first " << arguments[2] << " frames." << endl;
-    calculateChecksumMatches(arguments[0], arguments[1], arguments[2], dataOrder, enemyList, enemyDict, otidVector);
+    cout << "Executing with TIDs " << arguments[0] << " to " << arguments[1] << " (inclusive) and the first " << arguments[2] << " frames" << " using " << arguments[3] << " threads." << endl;
+    ThreadPool pool(arguments[3]);
+	for (int tid = arguments[0]; tid <= arguments[1]; tid++) {
+        //pool.enqueue(calculateChecksumMatchesThread(currentTid, arguments[2], dataOrder, ref(enemyList), ref(enemyDict), ref(otidVector)));
+        // Modify the call to `calculateChecksumMatchesThread` to wrap it in a lambda function
+        pool.enqueue([=, &enemyList, &enemyDict, &otidVector]() {
+           calculateChecksumMatchesThread(tid, arguments[2], dataOrder, ref(enemyList), ref(enemyDict), ref(otidVector));
+        });
+	}
+
+    // Wait for all threads to finish.
+    pool.stopAndWait();
+
+    // Combine checksum files
+    combineChecksumFiles();
 
     // Check Time Elapsed
     steady_clock::time_point end = steady_clock::now();
@@ -91,6 +117,14 @@ vector<int> parseArguments(int argc, char* argv[]) {
     } else {
         arguments.push_back(4000);
     }
+    if (argc >= 5) {
+        string arg = argv[4];
+        int threads = stoi(arg);
+        arguments.push_back(threads);
+    }
+    else {
+        arguments.push_back(1);
+    }
     return arguments;
 }
 
@@ -125,6 +159,14 @@ void handleArguments(vector<int> &args) {
     if (args[2] > 100000) {
         cout << "Frame upper bound exceeded, set to 100000." << endl;
         args[2] = 100000;
+    }
+    if (args[3] < 1) {
+        cout << "Thread count lower bound exceeded, set to 1." << endl;
+        args[3] = 1;
+    }
+    if (args[3] > thread::hardware_concurrency()) {
+        cout << "Thread count upper bound exceeded, set to hardware upper limit of " << thread::hardware_concurrency() << endl;
+        args[3] = thread::hardware_concurrency();
     }
 }
 
@@ -218,8 +260,7 @@ vector<vector<int>> otidFileToVector(string fileName) {
  *   checksums for each combination.
  * ******************************************************
  * Parameters:
- *   trainerIdStart: first TID to calc
- *   trainerIdEnd: last TID to calc
+ *   tid: TID to calc
  *   frames: num frames to calc
  *   dataOrder: idk what this is
  *   enemyList: vector of enemy mons
@@ -227,102 +268,98 @@ vector<vector<int>> otidFileToVector(string fileName) {
  *   otidVector: vector of otid data
  * ******************************************************
 */
-void calculateChecksumMatches(int trainerIdStart, int trainerIdEnd, int frames, string dataOrder[], vector<string> &enemyList, map<string, vector<long long>> enemyDict, vector<vector<int>> otidVector) {
+void calculateChecksumMatchesThread(int tid, int frames, const string dataOrder[], vector<string> &enemyList, map<string, vector<long long>> enemyDict, vector<vector<int>> otidVector) {
 
     // Delete output files if they exist and create a new one.
+	string matchFilePath = MATCH_FOLDER + "/" + to_string(tid) + ".csv";
+    string aceFilePath = ACE_FOLDER + "/" + to_string(tid) + ".csv";
     try {
-        filesystem::remove(MATCH_FILE);
-        filesystem::remove(ACE_FILE);   
+        filesystem::remove(matchFilePath);
+        filesystem::remove(aceFilePath);
     } catch (int errorCode) { }
-    ofstream matchFile(MATCH_FILE);
-    ofstream aceFile(ACE_FILE);
-    matchFile << CSV_HEADER << endl;
-    aceFile << CSV_HEADER << endl;
+    ofstream matchFile(matchFilePath);
+    ofstream aceFile(aceFilePath);
     int enemyListSize = enemyList.size();
     int dataOrderStringLength = 4;
 
     // Trainer ID is inclusive. We don't do subtraction in TID like in python bc we don't need to account for header row.
-    for (int tid = trainerIdStart; tid <= trainerIdEnd; tid++) {
-        cout << "Checking tid " << tid << endl;
-        string playerHex = intToHex(otidVector[tid][2], 4) + intToHex(otidVector[tid][1], 4).substr(2);
-        long long playerLongLong = stoll(playerHex, 0, 16);
-        long long playerKey = PID ^ playerLongLong;
+    cout << "Checking tid " << tid << endl;
+    string playerHex = intToHex(otidVector[tid][2], 4) + intToHex(otidVector[tid][1], 4).substr(2);
+    long long playerLongLong = stoll(playerHex, 0, 16);
+    long long playerKey = PID ^ playerLongLong;
 
-        // Start at frame 0. Python version starts at 1 bc of header column
-        for (int frame = 0; frame < frames; frame++) {
-            if (frame % 500 == 0) {
-                cout << "Checking frame " << frame << endl;
+    // Start at frame 0. Python version starts at 1 bc of header column
+    for (int frame = 0; frame < frames; frame++) {
+
+        string enemyHex = intToHex(otidVector[frame][1], 4) + intToHex(otidVector[frame][2], 4).substr(2);
+        long long enemyLongLong = stoll(enemyHex, 0, 16);
+        long long enemyKey = PID ^ enemyLongLong;
+        long long data[12] = {};
+
+        // Loop through all mons
+        for (int enemyListIndex = 0; enemyListIndex < enemyListSize; enemyListIndex++) {
+            string enemyMon = enemyList[enemyListIndex];
+            vector<long long> enemyMonData = enemyDict[enemyMon];
+            string dataOrderString = dataOrder[enemyMonData[0] % 24];
+
+            for (int dataOrderCharIndex = 0; dataOrderCharIndex < dataOrderStringLength; dataOrderCharIndex++) {
+                int enemyMonIndex = 0;
+                switch (dataOrderString[dataOrderCharIndex]) {
+                    case 'G':
+                        enemyMonIndex = DATA_ORDER_G;
+                        break;
+                    case 'A':
+                        enemyMonIndex = DATA_ORDER_A;
+                        break;
+                    case 'E':
+                        enemyMonIndex = DATA_ORDER_E;
+                        break;
+                    case 'M':
+                        enemyMonIndex = DATA_ORDER_M;
+                        break;
+                }
+                data[dataOrderCharIndex * 3] = enemyMonData[enemyMonIndex];
+                data[(dataOrderCharIndex * 3) + 1] = enemyMonData[enemyMonIndex + 1];
+                data[(dataOrderCharIndex * 3) + 2] = enemyMonData[enemyMonIndex + 2];
             }
 
-            string enemyHex = intToHex(otidVector[frame][1], 4) + intToHex(otidVector[frame][2], 4).substr(2);
-            long long enemyLongLong = stoll(enemyHex, 0, 16);
-            long long enemyKey = PID ^ enemyLongLong;
-            long long data[12] = {};
+            // Loop through pokeballs. We quit as soon as we find a match, even though there are likely more of the same pokeball.
+            for (long long pokeballIndex = 1; pokeballIndex < 13; pokeballIndex++) {
+				//cout << llToBin(data[9], 32).substr(2, 1) << " " << llToBin(pokeballIndex, 4).substr(2) << " " << llToBin(data[9], 32).substr(7) << endl;
+                long long data9Piece1 = data[9] & 0b10000111111111111111111111111111; // llToBin(data[9], 32).substr(2, 1) Get first bit
+                long long data9Piece2 = pokeballIndex << 27; // Shift bits over 27 to be next to Piece 1
+                data[9] = data9Piece1 + data9Piece2;
 
-            // Loop through all mons
-            for (int enemyListIndex = 0; enemyListIndex < enemyListSize; enemyListIndex++) {
-                string enemyMon = enemyList[enemyListIndex];
-                vector<long long> enemyMonData = enemyDict[enemyMon];
-                string dataOrderString = dataOrder[enemyMonData[0] % 24];
+                ChecksumMatchResults matchResults = calculateMatch(data, playerKey, enemyKey);
+                if (matchResults.match) {
+                    string matchOut = 
+                        to_string(tid) + "," +
+                        to_string(frame) + "," +
+                        to_string(otidVector[tid][1]) + " " +
+                        to_string(otidVector[tid][2]) + "," +
+                        to_string(otidVector[frame][2]) + " " +
+                        to_string(otidVector[frame][1]) + "," +
+                        "0x" + intToHex(matchResults.keyXorData0, 8).substr(6) + "," +
+                        intToHex(matchResults.keyXorData0, 8).substr(0, 6) + "," +
+                        "0x" + intToHex(matchResults.keyXorData3, 8).substr(6) + " " +
+                        intToHex(matchResults.keyXorData3, 8).substr(0, 6) + " " +
+                        "0x" + intToHex(matchResults.keyXorData4, 8).substr(6) + " " +
+                        intToHex(matchResults.keyXorData4, 8).substr(0, 6) + "," +
+                        to_string(pokeballIndex) + "," +
+                        llToBin(matchResults.keyXorData10, 32).substr(3, 1) + "," +
+                        enemyMon;
 
-                for (int dataOrderCharIndex = 0; dataOrderCharIndex < dataOrderStringLength; dataOrderCharIndex++) {
-                    int enemyMonIndex = 0;
-                    switch (dataOrderString[dataOrderCharIndex]) {
-                        case 'G':
-                            enemyMonIndex = DATA_ORDER_G;
-                            break;
-                        case 'A':
-                            enemyMonIndex = DATA_ORDER_A;
-                            break;
-                        case 'E':
-                            enemyMonIndex = DATA_ORDER_E;
-                            break;
-                        case 'M':
-                            enemyMonIndex = DATA_ORDER_M;
-                            break;
+                    matchFile << matchOut << endl;
+
+                    if (matchResults.ace) {
+                        aceFile << matchOut << endl;
                     }
-                    data[dataOrderCharIndex * 3] = enemyMonData[enemyMonIndex];
-                    data[(dataOrderCharIndex * 3) + 1] = enemyMonData[enemyMonIndex + 1];
-                    data[(dataOrderCharIndex * 3) + 2] = enemyMonData[enemyMonIndex + 2];
-                }
-
-                // Loop through pokeballs. We quit as soon as we find a match, even though there are likely more of the same pokeball.
-                for (long long pokeballIndex = 1; pokeballIndex < 13; pokeballIndex++) {
-					//cout << llToBin(data[9], 32).substr(2, 1) << " " << llToBin(pokeballIndex, 4).substr(2) << " " << llToBin(data[9], 32).substr(7) << endl;
-                    long long data9Piece1 = data[9] & 0b10000111111111111111111111111111; // llToBin(data[9], 32).substr(2, 1) Get first bit
-                    long long data9Piece2 = pokeballIndex << 27; // Shift bits over 27 to be next to Piece 1
-                    data[9] = data9Piece1 + data9Piece2;
-
-                    ChecksumMatchResults matchResults = calculateMatch(data, playerKey, enemyKey);
-                    if (matchResults.match) {
-                        string matchOut = 
-                            to_string(tid) + "," +
-                            to_string(frame) + "," +
-                            to_string(otidVector[tid][1]) + " " +
-                            to_string(otidVector[tid][2]) + "," +
-                            to_string(otidVector[frame][2]) + " " +
-                            to_string(otidVector[frame][1]) + "," +
-                            "0x" + intToHex(matchResults.keyXorData0, 8).substr(6) + "," +
-                            intToHex(matchResults.keyXorData0, 8).substr(0, 6) + "," +
-                            "0x" + intToHex(matchResults.keyXorData3, 8).substr(6) + " " +
-                            intToHex(matchResults.keyXorData3, 8).substr(0, 6) + " " +
-                            "0x" + intToHex(matchResults.keyXorData4, 8).substr(6) + " " +
-                            intToHex(matchResults.keyXorData4, 8).substr(0, 6) + "," +
-                            to_string(pokeballIndex) + "," +
-                            llToBin(matchResults.keyXorData10, 32).substr(3, 1) + "," +
-                            enemyMon;
-
-                        matchFile << matchOut << endl;
-
-                        if (matchResults.ace) {
-                            aceFile << matchOut << endl;
-                        }
-                        break;
-                    }
+                    break;
                 }
             }
         }
     }
+    cout << "Finished tid " << tid << endl;
 
     matchFile.close();
     aceFile.close();
@@ -378,6 +415,36 @@ ChecksumMatchResults calculateMatch(long long data[], long long playerKey, long 
 
         return matchResults;
     }
+}
+
+void combineChecksumFiles() {
+	// Combine all match files into one
+	ofstream combinedMatchFile("./combinedMatches.csv");
+    combinedMatchFile << CSV_HEADER << endl;
+	for (const auto& entry : filesystem::directory_iterator(MATCH_FOLDER)) {
+		if (entry.path().extension() == ".csv" && entry.path().filename() != "combined.csv") {
+			ifstream matchFile(entry.path());
+			string line;
+			while (getline(matchFile, line)) {
+                combinedMatchFile << line << endl;
+			}
+		}
+	}
+    combinedMatchFile.close();
+
+    // Combine all ace files into one
+    ofstream combinedAceFile("./combinedAces.csv");
+    combinedAceFile << CSV_HEADER << endl;
+    for (const auto& entry : filesystem::directory_iterator(ACE_FOLDER)) {
+        if (entry.path().extension() == ".csv" && entry.path().filename() != "combined.csv") {
+            ifstream aceFile(entry.path());
+            string line;
+            while (getline(aceFile, line)) {
+                combinedAceFile << line << endl;
+            }
+        }
+    }
+    combinedAceFile.close();
 }
 
 /* ******************************************************
