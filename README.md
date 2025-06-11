@@ -39,12 +39,16 @@
 ## Run:
 In a command prompt, navigate to the directory containing RSChecksumCalculator.exe and call 
 
-`.\RSChecksumCalculator.exe <first TID to calculate> <last TID to calculate> <number of frames to calculate>`
+`.\RSChecksumCalculator.exe <first TID to calculate> <last TID to calculate> <number of frames to calculate> <number of threads to use, default = 1, max = num cores in your processor>`
 
-Example that calculates 4000 frames for TID 3575 and 3576: 
+Example that calculates 4000 frames for TID 3575 and 3576 using 4 threads: 
 
-`.\RSChecksumCalculator.exe 3575 3576 4000`
+`.\RSChecksumCalculator.exe 3575 3576 4000 4`
 
-Your results should appear in a csv file named cppMatches.csv and cppAces.csv. Subsequent runs will overwrite an existing file, so be careful to save your results.
+Example that calculates 4000 frames for TID 1 to 10000 using maximum threads: 
+
+`.\RSChecksumCalculator.exe 1 10000 4000 1000`
+
+Your results should appear in a csv file named combinedMatches.csv and combinedAces.csv. Subsequent runs will overwrite an existing file, so be careful to save your results.
 
 # [If you want to edit using Visual Studio](https://code.visualstudio.com/docs/languages/cpp)
