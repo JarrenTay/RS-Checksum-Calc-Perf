@@ -34,7 +34,7 @@
 1. Use a command prompt and navigate to the directory containing RSChecksumCalculator.cpp
 2. Execute:
 
-   `g++ -std=c++17 -O3 -o RSChecksumCalculator RSChecksumCalculator.cpp`
+   `g++ -std=c++17 -O3 -o RSChecksumCalculator RSChecksumCalculator.cpp ThreadPool.cpp`
 
 ## Run:
 In a command prompt, navigate to the directory containing RSChecksumCalculator.exe and call 
