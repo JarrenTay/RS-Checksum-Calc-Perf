@@ -63,20 +63,11 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
-    // Calculate Checksums
-    cout << "Executing with TIDs " << arguments[0] << " to " << arguments[1] << " (inclusive) and the first " << arguments[2] << " frames" << " using " << arguments[3] << " threads." << endl;
-    ThreadPool pool(arguments[3]);
-	for (int tid = arguments[0]; tid <= arguments[1]; tid++) {
-        //pool.enqueue(calculateChecksumMatchesThread(currentTid, arguments[2], dataOrder, ref(enemyList), ref(enemyDict), ref(otidVector)));
-        // Modify the call to `calculateChecksumMatchesThread` to wrap it in a lambda function
-        pool.enqueue([=, &enemyList, &enemyDict, &otidVector]() {
-           calculateChecksumMatchesThread(tid, arguments[2], dataOrder, ref(enemyList), ref(enemyDict), ref(otidVector));
-        });
-	}
+    // Calculate checksums
+    cout << "Calculating checksums" << endl;
+    calculateChecksums(arguments, dataOrder, enemyList, enemyDict, otidVector);
 
-    // Wait for all threads to finish.
-    pool.stopAndWait();
-
+    cout << "Writing to file" << endl;
     // Combine checksum files
     combineChecksumFiles();
 
@@ -101,14 +92,14 @@ vector<int> parseArguments(int argc, char* argv[]) {
         int startingTid = stoi(arg);
         arguments.push_back(startingTid);
     } else {
-        arguments.push_back(3575);
+        arguments.push_back(1);
     }
     if (argc >= 3) {
         string arg = argv[2];
         int endingTid = stoi(arg);
         arguments.push_back(endingTid);
     } else {
-        arguments.push_back(3575);
+        arguments.push_back(20);
     }
     if (argc >= 4) {
         string arg = argv[3];
@@ -123,7 +114,7 @@ vector<int> parseArguments(int argc, char* argv[]) {
         arguments.push_back(threads);
     }
     else {
-        arguments.push_back(1);
+        arguments.push_back(10);
     }
     return arguments;
 }
@@ -256,6 +247,37 @@ vector<vector<int>> otidFileToVector(string fileName) {
 }
 
 /* ******************************************************
+ * Purpose: Organizes threads to calculate checksums
+ * ******************************************************
+ * Parameters:
+ *   arguments: Arguments from command line
+ *     [0] : TID Start
+ *     [1] : TID End
+ *     [2] : Frames to calculate
+ *     [3] : Number of threads
+ *   dataOrder: idk what this is
+ *   enemyList: vector of enemy mons
+ *   enemyDict: map of enemy mon to enemy data
+ *   otidVector: vector of otid data
+ * ******************************************************
+*/
+void calculateChecksums(vector<int> arguments, const string dataOrder[], vector<string> enemyList, map<string, vector<long long>> enemyDict, vector<vector<int>> otidVector) {
+    // Calculate Checksums
+    cout << "Executing with TIDs " << arguments[0] << " to " << arguments[1] << " (inclusive) and the first " << arguments[2] << " frames" << " using " << arguments[3] << " threads." << endl;
+    ThreadPool pool(arguments[3]);
+    for (int tid = arguments[0]; tid <= arguments[1]; tid++) {
+        //pool.enqueue(calculateChecksumMatchesThread(currentTid, arguments[2], dataOrder, ref(enemyList), ref(enemyDict), ref(otidVector)));
+        // Modify the call to `calculateChecksumMatchesThread` to wrap it in a lambda function
+        pool.enqueue([=, &enemyList, &enemyDict, &otidVector]() {
+            calculateChecksumMatchesThread(tid, arguments[2], dataOrder, ref(enemyList), ref(enemyDict), ref(otidVector));
+            });
+    }
+
+    // Wait for all threads to finish.
+    pool.stopAndWait();
+}
+
+/* ******************************************************
  * Purpose: Loops through TIDs and frames and calcs
  *   checksums for each combination.
  * ******************************************************
@@ -283,7 +305,6 @@ void calculateChecksumMatchesThread(int tid, int frames, const string dataOrder[
     int dataOrderStringLength = 4;
 
     // Trainer ID is inclusive. We don't do subtraction in TID like in python bc we don't need to account for header row.
-    cout << "Checking tid " << tid << endl;
     string playerHex = intToHex(otidVector[tid][2], 4) + intToHex(otidVector[tid][1], 4).substr(2);
     long long playerLongLong = stoll(playerHex, 0, 16);
     long long playerKey = PID ^ playerLongLong;
@@ -359,7 +380,7 @@ void calculateChecksumMatchesThread(int tid, int frames, const string dataOrder[
             }
         }
     }
-    cout << "Finished tid " << tid << endl;
+    cout << "Finished tid " + to_string(tid) + "\n";
 
     matchFile.close();
     aceFile.close();
@@ -417,6 +438,10 @@ ChecksumMatchResults calculateMatch(long long data[], long long playerKey, long 
     }
 }
 
+/* ******************************************************
+ * Purpose: Combines checksum files into one file
+ * ******************************************************
+*/
 void combineChecksumFiles() {
 	// Combine all match files into one
 	ofstream combinedMatchFile("./combinedMatches.csv");
@@ -464,6 +489,14 @@ string padStringNumber(string number) {
     return outNumber;
 }
 
+/* ******************************************************
+ * Purpose: Converts int to hex string
+ * ******************************************************
+ * Parameters:
+ *   i: integer to convert (can be an int-like type)
+ *   len: Length of the hex string to return after 0x
+ * ******************************************************
+*/
 template< typename T >
 string intToHex(T i, int len)
 {
@@ -475,6 +508,14 @@ string intToHex(T i, int len)
     return "0x" + hex.substr(hex.length() - len);
 }
 
+/* ******************************************************
+ * Purpose: Converts long long to binary string
+ * ******************************************************
+ * Parameters:
+ *   longlong: long long to convert
+ *   len: Length of the hex string to return after 0b
+ * ******************************************************
+*/
 string llToBin(long long longlong, int len)
 {
     return "0b" + bitset<32>(longlong).to_string().substr(32 - len);

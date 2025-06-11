@@ -3,6 +3,10 @@ aceMatches.csv
 checksumMatches.csv
 cppAces.csv
 cppMatches.csv
+combinedAces.csv
+combinedMatches.csv
+cppAces/
+cppMatches/
 .vscode/
 .vs/
 Project1*
