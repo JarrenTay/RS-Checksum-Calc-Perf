@@ -45,9 +45,9 @@ Example that calculates frames 0 to 3999 for TID 3575 and 3576 using 4 threads:
 
 `.\RSChecksumCalculator.exe 3575 3576 4000 4`
 
-Example that calculates frames 0 to 3999 for TID 1 to 10000 using maximum threads (automatically defaults to num cores you have): 
+Example that calculates frames 0 to 3999 for TID 0 to 10000 using maximum threads (automatically defaults to num cores you have): 
 
-`.\RSChecksumCalculator.exe 1 10000 4000 1000`
+`.\RSChecksumCalculator.exe 0 10000 4000 1000`
 
 Your results should appear in a csv file named combinedMatches.csv and combinedAces.csv. Subsequent runs will overwrite an existing file, so be careful to save your results.
 
