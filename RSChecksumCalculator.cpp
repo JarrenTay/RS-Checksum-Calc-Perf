@@ -52,8 +52,14 @@ int main(int argc, char* argv[]) {
         "EGAM", "EGMA", "EAGM", "EAMG", "EMGA", "EMAG",
         "MGAE", "MGEA", "MAGE", "MAEG", "MEGA", "MEAG"
     };
+    map<string, vector<int>> dataOrderOrder = dataOrderToMap("dataOrder.csv");
 
     // Create Directory
+    try {
+        filesystem::remove_all(MATCH_FOLDER);
+        filesystem::remove_all(ACE_FOLDER);
+    }
+    catch (int _) {}
 	try {
 		filesystem::create_directory(MATCH_FOLDER);
 		filesystem::create_directory(ACE_FOLDER);
@@ -65,7 +71,7 @@ int main(int argc, char* argv[]) {
 
     // Calculate checksums
     cout << "Calculating checksums" << endl;
-    calculateChecksums(arguments, dataOrder, enemyList, enemyDict, otidVector);
+    calculateChecksums(arguments, dataOrder, dataOrderOrder, enemyList, enemyDict, otidVector);
 
     cout << "Writing to file" << endl;
     // Combine checksum files
@@ -92,14 +98,14 @@ vector<int> parseArguments(int argc, char* argv[]) {
         int startingTid = stoi(arg);
         arguments.push_back(startingTid);
     } else {
-        arguments.push_back(1);
+        arguments.push_back(0);
     }
     if (argc >= 3) {
         string arg = argv[2];
         int endingTid = stoi(arg);
         arguments.push_back(endingTid);
     } else {
-        arguments.push_back(20);
+        arguments.push_back(1000);
     }
     if (argc >= 4) {
         string arg = argv[3];
@@ -114,7 +120,7 @@ vector<int> parseArguments(int argc, char* argv[]) {
         arguments.push_back(threads);
     }
     else {
-        arguments.push_back(10);
+        arguments.push_back(1);
     }
     return arguments;
 }
@@ -195,6 +201,35 @@ map<string, vector<long long>> dataFileToMap(string fileName, vector<string> &en
 }
 
 /* ******************************************************
+ * Purpose: Converts Data Order into a map
+ * ******************************************************
+ * Parameters:
+ *   fileName: Name of file containing data order
+ * ******************************************************
+*/
+map<string, vector<int>> dataOrderToMap(string fileName) {
+    string dataOrderRawLine = "";
+    ifstream dataOrderFile(fileName);
+    map<string, vector<int>> dataOrderDict = map<string, vector<int>>();
+    const string DELIMITER = ",";
+
+    while (getline(dataOrderFile, dataOrderRawLine)) {
+        string dataOrderString = dataOrderRawLine.substr(0, dataOrderRawLine.find(DELIMITER));
+        vector<int> dataOrderOrderVector = vector<int>();
+
+        int startIndex = dataOrderRawLine.find(DELIMITER);
+        string dataOrderPiece = "";
+        for (int i = 0; i < 12; i++) {
+            dataOrderPiece = dataOrderRawLine.substr(startIndex + 1, dataOrderRawLine.find(DELIMITER, startIndex + 1));
+            startIndex = dataOrderRawLine.find(DELIMITER, startIndex + 1);
+            dataOrderOrderVector.push_back(stoi(dataOrderPiece));
+        }
+        dataOrderDict.insert(pair<string, vector<int>>(dataOrderString, dataOrderOrderVector));
+    }
+    return dataOrderDict;
+}
+
+/* ******************************************************
  * Purpose: Converts a hex string to little endian
  * ******************************************************
  * Parameters:
@@ -261,15 +296,13 @@ vector<vector<int>> otidFileToVector(string fileName) {
  *   otidVector: vector of otid data
  * ******************************************************
 */
-void calculateChecksums(vector<int> arguments, const string dataOrder[], vector<string> enemyList, map<string, vector<long long>> enemyDict, vector<vector<int>> otidVector) {
+void calculateChecksums(vector<int> arguments, const string dataOrder[], map<string, vector<int>> dataOrderOrder, vector<string> enemyList, map<string, vector<long long>> enemyDict, vector<vector<int>> otidVector) {
     // Calculate Checksums
     cout << "Executing with TIDs " << arguments[0] << " to " << arguments[1] << " (inclusive) and the first " << arguments[2] << " frames" << " using " << arguments[3] << " threads." << endl;
     ThreadPool pool(arguments[3]);
     for (int tid = arguments[0]; tid <= arguments[1]; tid++) {
-        //pool.enqueue(calculateChecksumMatchesThread(currentTid, arguments[2], dataOrder, ref(enemyList), ref(enemyDict), ref(otidVector)));
-        // Modify the call to `calculateChecksumMatchesThread` to wrap it in a lambda function
         pool.enqueue([=, &enemyList, &enemyDict, &otidVector]() {
-            calculateChecksumMatchesThread(tid, arguments[2], dataOrder, ref(enemyList), ref(enemyDict), ref(otidVector));
+            calculateChecksumMatchesThread(tid, arguments[2], dataOrder, ref(dataOrderOrder), ref(enemyList), ref(enemyDict), ref(otidVector));
             });
     }
 
@@ -290,7 +323,7 @@ void calculateChecksums(vector<int> arguments, const string dataOrder[], vector<
  *   otidVector: vector of otid data
  * ******************************************************
 */
-void calculateChecksumMatchesThread(int tid, int frames, const string dataOrder[], vector<string> &enemyList, map<string, vector<long long>> enemyDict, vector<vector<int>> otidVector) {
+void calculateChecksumMatchesThread(int tid, int frames, const string dataOrder[], map<string, vector<int>> dataOrderOrder, vector<string> &enemyList, map<string, vector<long long>> enemyDict, vector<vector<int>> otidVector) {
 
     // Delete output files if they exist and create a new one.
 	string matchFilePath = MATCH_FOLDER + "/" + to_string(tid) + ".csv";
@@ -322,53 +355,36 @@ void calculateChecksumMatchesThread(int tid, int frames, const string dataOrder[
             string enemyMon = enemyList[enemyListIndex];
             vector<long long> enemyMonData = enemyDict[enemyMon];
             string dataOrderString = dataOrder[enemyMonData[0] % 24];
+            vector<int> usedDataOrder = dataOrderOrder[dataOrderString];
 
-            for (int dataOrderCharIndex = 0; dataOrderCharIndex < dataOrderStringLength; dataOrderCharIndex++) {
-                int enemyMonIndex = 0;
-                switch (dataOrderString[dataOrderCharIndex]) {
-                    case 'G':
-                        enemyMonIndex = DATA_ORDER_G;
-                        break;
-                    case 'A':
-                        enemyMonIndex = DATA_ORDER_A;
-                        break;
-                    case 'E':
-                        enemyMonIndex = DATA_ORDER_E;
-                        break;
-                    case 'M':
-                        enemyMonIndex = DATA_ORDER_M;
-                        break;
-                }
-                data[dataOrderCharIndex * 3] = enemyMonData[enemyMonIndex];
-                data[(dataOrderCharIndex * 3) + 1] = enemyMonData[enemyMonIndex + 1];
-                data[(dataOrderCharIndex * 3) + 2] = enemyMonData[enemyMonIndex + 2];
+            for (int dataOrderIndex = 0; dataOrderIndex < 12; dataOrderIndex++) {
+                data[dataOrderIndex] = enemyMonData[usedDataOrder[dataOrderIndex]];
             }
 
             // Loop through pokeballs. We quit as soon as we find a match, even though there are likely more of the same pokeball.
             for (long long pokeballIndex = 1; pokeballIndex < 13; pokeballIndex++) {
-				//cout << llToBin(data[9], 32).substr(2, 1) << " " << llToBin(pokeballIndex, 4).substr(2) << " " << llToBin(data[9], 32).substr(7) << endl;
                 long long data9Piece1 = data[9] & 0b10000111111111111111111111111111; // llToBin(data[9], 32).substr(2, 1) Get first bit
                 long long data9Piece2 = pokeballIndex << 27; // Shift bits over 27 to be next to Piece 1
                 data[9] = data9Piece1 + data9Piece2;
-
+                const string CSV_HEADER = "Player frame,Enemy Frame,Player TID/SID,Enemy TID/SID,Species,Held Item,Moves,Pokeball,Egg,Enemy Mon";
                 ChecksumMatchResults matchResults = calculateMatch(data, playerKey, enemyKey);
                 if (matchResults.match) {
                     string matchOut = 
-                        to_string(tid) + "," +
-                        to_string(frame) + "," +
-                        to_string(otidVector[tid][1]) + " " +
-                        to_string(otidVector[tid][2]) + "," +
-                        to_string(otidVector[frame][2]) + " " +
-                        to_string(otidVector[frame][1]) + "," +
-                        "0x" + intToHex(matchResults.keyXorData0, 8).substr(6) + "," +
-                        intToHex(matchResults.keyXorData0, 8).substr(0, 6) + "," +
-                        "0x" + intToHex(matchResults.keyXorData3, 8).substr(6) + " " +
-                        intToHex(matchResults.keyXorData3, 8).substr(0, 6) + " " +
-                        "0x" + intToHex(matchResults.keyXorData4, 8).substr(6) + " " +
-                        intToHex(matchResults.keyXorData4, 8).substr(0, 6) + "," +
-                        to_string(pokeballIndex) + "," +
-                        llToBin(matchResults.keyXorData10, 32).substr(3, 1) + "," +
-                        enemyMon;
+                        to_string(tid) + "," +                                          // Player Frame
+                        to_string(frame) + "," +                                        // Enemy Frame
+                        to_string(otidVector[tid][1]) + " " +                           // Player TID
+                        to_string(otidVector[tid][2]) + "," +                           // Player SID
+                        to_string(otidVector[frame][2]) + " " +                         // Enemy TID
+                        to_string(otidVector[frame][1]) + "," +                         // Enemy SID
+                        "0x" + intToHex(matchResults.keyXorData0, 8).substr(6) + "," +  // Species
+                        intToHex(matchResults.keyXorData0, 8).substr(0, 6) + "," +      // Held Item
+                        "0x" + intToHex(matchResults.keyXorData3, 8).substr(6) + " " +  // Moves 1
+                        intToHex(matchResults.keyXorData3, 8).substr(0, 6) + " " +      // Moves 2
+                        "0x" + intToHex(matchResults.keyXorData4, 8).substr(6) + " " +  // Moves 3
+                        intToHex(matchResults.keyXorData4, 8).substr(0, 6) + "," +      // Moves 4
+                        to_string(pokeballIndex) + "," +                                // Pokeball
+                        llToBin(matchResults.keyXorData10, 32).substr(3, 1) + "," +     // Egg
+                        enemyMon;                                                       // Enemy Mon
 
                     matchFile << matchOut << endl;
 

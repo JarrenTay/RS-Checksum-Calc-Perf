@@ -39,13 +39,13 @@
 ## Run:
 In a command prompt, navigate to the directory containing RSChecksumCalculator.exe and call 
 
-`.\RSChecksumCalculator.exe <first TID to calculate> <last TID to calculate> <number of frames to calculate> <number of threads to use, default = 10, max = num cores in your processor>`
+`.\RSChecksumCalculator.exe <first TID to calculate> <last TID to calculate> <number of frames to calculate> <number of threads to use, default = 1, max = num cores in your processor>`
 
-Example that calculates 4000 frames for TID 3575 and 3576 using 4 threads: 
+Example that calculates frames 0 to 3999 for TID 3575 and 3576 using 4 threads: 
 
 `.\RSChecksumCalculator.exe 3575 3576 4000 4`
 
-Example that calculates 4000 frames for TID 1 to 10000 using maximum threads (automatically defaults to num cores you have): 
+Example that calculates frames 0 to 3999 for TID 1 to 10000 using maximum threads (automatically defaults to num cores you have): 
 
 `.\RSChecksumCalculator.exe 1 10000 4000 1000`
 
