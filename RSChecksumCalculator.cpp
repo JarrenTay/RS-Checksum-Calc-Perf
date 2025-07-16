@@ -24,7 +24,7 @@ const int DATA_ORDER_G = 1;
 const int DATA_ORDER_A = 4;
 const int DATA_ORDER_E = 7;
 const int DATA_ORDER_M = 10;
-const string CSV_HEADER = "Player frame,Enemy Frame,Player TID/SID,Enemy TID/SID,Species,Held Item,Moves,Pokeball,Egg,Enemy Mon,Move 1 PP,Move 2 PP,Move 3 PP,Move 4 PP";
+const string CSV_HEADER = "Player frame,Enemy Frame,Player TID/SID,Enemy TID/SID,Species,Held Item,Moves,Pokeball,Egg,Enemy Mon,Move 1 PP,Move 2 PP,Move 3 PP,Move 4 PP,Enemy List Index";
 const string MATCH_FOLDER = "./cppMatchesPP";
 const string ACE_FOLDER = "./cppAcesPP";
 
@@ -412,7 +412,7 @@ void calculateChecksumEnemyMonThread(int tid, int frame, long long playerKey, lo
                         long long data9Piece1 = data[9] & 0b10000111111111111111111111111111; // llToBin(data[9], 32).substr(2, 1) Get first bit
                         long long data9Piece2 = pokeballIndex << 27; // Shift bits over 27 to be next to Piece 1
                         data[9] = data9Piece1 + data9Piece2;
-                        //const string CSV_HEADER = "Player frame,Enemy Frame,Player TID/SID,Enemy TID/SID,Species,Held Item,Moves,Pokeball,Egg,Enemy Mon,Move 1 PP,Move 2 PP,Move 3 PP,Move 4 PP";
+                        //const string CSV_HEADER = "Player frame,Enemy Frame,Player TID/SID,Enemy TID/SID,Species,Held Item,Moves,Pokeball,Egg,Enemy Mon,Move 1 PP,Move 2 PP,Move 3 PP,Move 4 PP,Enemy List Index";
                         ChecksumMatchResults matchResults = calculateMatch(data, playerKey, enemyKey);
                         if (matchResults.match) {
                             string matchOut =
@@ -434,7 +434,8 @@ void calculateChecksumEnemyMonThread(int tid, int frame, long long playerKey, lo
                                 to_string(ppMove0) + "," +                                      // Move 1 PP
                                 to_string(ppMove1) + "," +                                      // Move 2 PP
                                 to_string(ppMove2) + "," +                                      // Move 3 PP
-                                to_string(ppMove3);                                             // Move 4 PP
+                                to_string(ppMove3) + "," +                                      // Move 4 PP
+                                to_string(enemyListIndex);                                      // Enemy List Index
 
                             found = true;
 
@@ -443,7 +444,6 @@ void calculateChecksumEnemyMonThread(int tid, int frame, long long playerKey, lo
                             if (matchResults.ace) {
                                 aceFile << matchOut << endl;
                             }
-                            break;
                         }
                     }
                 }
