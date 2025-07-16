@@ -443,7 +443,6 @@ void calculateChecksumEnemyMonThread(int tid, int frame, long long playerKey, lo
                             if (matchResults.ace) {
                                 aceFile << matchOut << endl;
                             }
-                            break;
                         }
                     }
                 }
