@@ -39,12 +39,16 @@
 ## Run:
 In a command prompt, navigate to the directory containing RSChecksumCalculator.exe and call 
 
-`.\RSChecksumCalculator.exe <first TID to calculate> <last TID to calculate> <number of frames to calculate> <number of threads to use, default = 1, max = num cores in your processor> <max PP used for each move>`
+`.\RSChecksumCalculator.exe <first TID to calculate> <last TID to calculate> <number of frames to calculate> <number of threads to use, default = 1, max = num cores in your processor> <max PP used for each move> <max enemies to search from beginning> <IsSapphire = 0 | Is Ruby = 1>`
 
 ### On this branch, you probably want something like this example:
-Example that calculates frames 0 to 50 for TID 100001 using max threads and max 1 pp used for each move: 
+Example that calculates frames 0 to 100 for TID 100001 using max threads and max 1 pp used for each move, searching for the first 70 enemies, in sapphire: 
 
-`.\RSChecksumCalculator.exe 100001 100001 50 1000 1`
+`.\RSChecksumCalculator.exe 100001 100001 100 1000 1 70 0`
+
+Example that calculates frames 0 to 50 for TID 100001 using max threads and max 2 pp used for each move, searching for the first 100 enemies, in ruby: 
+
+`.\RSChecksumCalculator.exe 100001 100001 50 1000 2 100 1`
 
 Your results should appear in a csv file named combinedPPMatches.csv and combinedPPAces.csv. Subsequent runs will overwrite an existing file, so be careful to save your results.
 

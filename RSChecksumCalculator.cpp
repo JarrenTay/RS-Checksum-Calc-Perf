@@ -13,6 +13,7 @@
 #include <mutex>
 #include <algorithm>
 #include <set>
+#include <stdlib.h>
 #include "RSChecksumCalculator.h"
 #include "ThreadPool.h"
 
@@ -132,6 +133,22 @@ vector<int> parseArguments(int argc, char* argv[]) {
     else {
         arguments.push_back(1);
     }
+    if (argc >= 7) {
+        string arg = argv[6];
+        int maxEnemyIndex = stoi(arg);
+        arguments.push_back(maxEnemyIndex);
+    }
+    else {
+        arguments.push_back(100000);
+    }
+    if (argc >= 8) {
+        string arg = argv[7];
+        bool ruby = stoi(arg);
+        arguments.push_back(ruby);
+    }
+    else {
+        arguments.push_back(false);
+    }
     return arguments;
 }
 
@@ -182,6 +199,10 @@ void handleArguments(vector<int> &args) {
     if (args[4] > 40) {
         cout << "Thread count upper bound exceeded, set to hardware upper limit of " << 40 << endl;
         args[4] = 40;
+    }
+    if (args[5] < 0) {
+        cout << "Max enemy index lower bound exceeded, set to 1." << endl;
+        args[5] = 1;
     }
 }
 
@@ -309,6 +330,8 @@ vector<vector<int>> otidFileToVector(string fileName) {
  *     [2] : Frames to calculate
  *     [3] : Number of threads
  *     [4] : Max PP Usage
+ *     [5] : Max enemy index
+ *     [6] : Ruby or Sapphire
  *   dataOrder: idk what this is
  *   enemyList: vector of enemy mons
  *   enemyDict: map of enemy mon to enemy data
@@ -318,11 +341,21 @@ vector<vector<int>> otidFileToVector(string fileName) {
 void calculateChecksums(vector<int> arguments, const string dataOrder[], map<string, vector<int>> dataOrderOrder, vector<string> enemyList, map<string, vector<long long>> enemyDict, vector<vector<int>> otidVector) {
     // Calculate Checksums
     cout << "Executing with TIDs " << arguments[0] << " to " << arguments[1] << " (inclusive) and the first " << arguments[2] << " frames" << " using " << arguments[3] << " threads." << endl;
+    cout << "Maximum PP Usage " << arguments[4] << " and max enemy index of " << arguments[5] << "." << endl;
+    if (arguments[6]) {
+        cout << "Calculating for Ruby." << endl;
+    }
+    else {
+        cout << "Calculating for Sapphire." << endl;
+    }
+
+    this_thread::sleep_for(chrono::milliseconds(2500));
+
     ThreadPool pool(arguments[3]);
     for (int tid = arguments[0]; tid <= arguments[1]; tid++) {
         
         int frames = arguments[2];
-        int enemyListSize = enemyList.size();
+        int enemyListSize = min(arguments[5], (int) enemyList.size());
         int dataOrderStringLength = 4;
 
         // Trainer ID is inclusive. We don't do subtraction in TID like in python bc we don't need to account for header row.
@@ -331,7 +364,7 @@ void calculateChecksums(vector<int> arguments, const string dataOrder[], map<str
         long long playerKey = PID ^ playerLongLong;
 
         // Start at frame 0. Python version starts at 1 bc of header column
-    for (int frame = 0; frame < frames; frame++) {
+        for (int frame = 0; frame < frames; frame++) {
 
             string enemyHex = intToHex(otidVector[frame][1], 4) + intToHex(otidVector[frame][2], 4).substr(2);
             long long enemyLongLong = stoll(enemyHex, 0, 16);
@@ -341,7 +374,7 @@ void calculateChecksums(vector<int> arguments, const string dataOrder[], map<str
             for (int enemyListIndex = 0; enemyListIndex < enemyListSize; enemyListIndex++) {
 
                 pool.enqueue([=, &dataOrderOrder, &enemyList, &enemyDict, &otidVector]() {
-                    calculateChecksumEnemyMonThread(tid, frame, playerKey, enemyKey, dataOrder, ref(dataOrderOrder), ref(enemyList), ref(enemyDict), ref(otidVector), enemyListIndex, arguments[4]);
+                    calculateChecksumEnemyMonThread(tid, frame, playerKey, enemyKey, dataOrder, ref(dataOrderOrder), ref(enemyList), ref(enemyDict), ref(otidVector), enemyListIndex, arguments[4], arguments[6]);
                     });
             }
         }
@@ -355,7 +388,7 @@ void calculateChecksums(vector<int> arguments, const string dataOrder[], map<str
  * Purpose: Calculates checksum for an enemy mon
  * ******************************************************
 */
-void calculateChecksumEnemyMonThread(int tid, int frame, long long playerKey, long long enemyKey, const string dataOrder[], map<string, vector<int>> dataOrderOrder, vector<string> enemyList, map<string, vector<long long>> enemyDict, vector<vector<int>> otidVector, int enemyListIndex, int maxPpUsage) {
+void calculateChecksumEnemyMonThread(int tid, int frame, long long playerKey, long long enemyKey, const string dataOrder[], map<string, vector<int>> dataOrderOrder, vector<string> enemyList, map<string, vector<long long>> enemyDict, vector<vector<int>> otidVector, int enemyListIndex, int maxPpUsage, bool ruby) {
 
     // Delete output files if they exist and create a new one.
     string matchFilePath = MATCH_FOLDER + "/" + to_string(frame) + "_" + to_string(enemyListIndex) + ".csv";
@@ -381,6 +414,13 @@ void calculateChecksumEnemyMonThread(int tid, int frame, long long playerKey, lo
 
     for (int dataOrderIndex = 0; dataOrderIndex < 12; dataOrderIndex++) {
         data[dataOrderIndex] = enemyMonData[usedDataOrder[dataOrderIndex]];
+    }
+
+    if (ruby) {
+        long long data9Piece1 = data[9] & 0b11111000000000000000000000000000;
+        long long data9Piece2 =           0b00000001000000000000000000000000;
+        long long data9Piece3 = data[9] & 0b00000000011111111111111111111111;
+        data[9] = data9Piece1 + data9Piece2 + data9Piece3;
     }
 
     long long ppMoveMax[4] = {};

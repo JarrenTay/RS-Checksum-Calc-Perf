@@ -26,7 +26,7 @@ map<string, vector<int>> dataOrderToMap(string fileName);
 long long hexStringToIntLittleEndian(string hexString);
 vector<vector<int>> otidFileToVector(string fileName);
 void calculateChecksums(vector<int> arguments, const string dataOrder[], map<string, vector<int>> dataOrderOrder, vector<string> enemyList, map<string, vector<long long>> enemyDict, vector<vector<int>> otidVector); 
-void calculateChecksumEnemyMonThread(int tid, int frame, long long playerKey, long long enemyKey, const string dataOrder[], map<string, vector<int>> dataOrderOrder, vector<string> enemyList, map<string, vector<long long>> enemyDict, vector<vector<int>> otidVector, int enemyListIndex, int maxPpUsage);
+void calculateChecksumEnemyMonThread(int tid, int frame, long long playerKey, long long enemyKey, const string dataOrder[], map<string, vector<int>> dataOrderOrder, vector<string> enemyList, map<string, vector<long long>> enemyDict, vector<vector<int>> otidVector, int enemyListIndex, int maxPpUsage, bool ruby);
 struct ChecksumMatchResults;
 ChecksumMatchResults calculateMatch(long long data[], long long playerKey, long long enemyKey);
 void combineChecksumFiles();
